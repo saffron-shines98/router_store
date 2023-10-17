@@ -12,8 +12,8 @@ class OrderService:
         jwt_token = self.headers.get('Jwt')
         nodesso_id = self.headers.get('Nodesso-Id')
         payload = {
-            'jwt_token': jwt_token,
-            'nodesso_id': nodesso_id,
+            'token': jwt_token,
+            'nodessoId': nodesso_id,
         }
         api_response = self.coordinator.validate_jwt(payload)
         challenging_string = api_response.get('challenge_string')
