@@ -52,13 +52,17 @@ class BaseCoordinator:
 
     def post(self, path, payload=None, headers=dict(), params=None, data=None, timeout=90) -> Response:
         headers.update({'Content-type': 'application/json', 'Accept': 'application/json'})
-        # response = requests.post(self.action(path), params=params, json=None, headers=headers, data=json.dumps(payload, separators=(',', ':')), timeout=timeout)
-        response = requests.post(self.action(path), params=params, json=None, headers=headers, data=data, timeout=timeout)
+        response = requests.post(self.action(path), params=params, json=payload, headers=headers, data=data, timeout=timeout)
+        return response
+
+    def get(self, path, payload=None, headers=None, timeout=90):
+        response = requests.get(
+            self.action(path), params=payload, headers=headers, timeout=timeout)
         return response
 
 
 class SSOCoordinator(BaseCoordinator):
 
     def __init__(self):
-        base_url = Config.sso_coordinator_uri
+        base_url = Config.SSO_COORDINATOR_URI
         super(SSOCoordinator, self).__init__(base_url)
