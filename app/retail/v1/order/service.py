@@ -23,7 +23,6 @@ class OrderService:
         output_format = "%Y:%m:%d %H:%M:%S"
         parsed_date = datetime.strptime(created_time, input_format)
         converted_date_time = parsed_date.strftime(output_format)
-        current_date_time= get_c
         order_payload = {
             "order_id": self.params.get('order_id'),
             "order_status": self.params.get('order_status'),
