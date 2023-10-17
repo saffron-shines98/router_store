@@ -16,7 +16,7 @@ class OrderService:
             'nodessoId': nodesso_id,
         }
         api_response = self.coordinator.validate_jwt(payload)
-        challenging_string = api_response.get('challenge_string')
+        challenging_string = api_response.get('payload').get('challenge_string')
         order_payload = {
             "order_id": self.params.get('order_id'),
             "order_status": self.params.get('order_status'),
