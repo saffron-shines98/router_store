@@ -17,7 +17,7 @@ class OrderService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        api_response = self.coordinator.validate_jwt(payload)
+        self.coordinator.validate_jwt(payload)
         created_time = self.params.get('status_created_time')
         input_format = "%d:%m:%Y %H:%M:%S"
         output_format = "%Y:%m:%d %H:%M:%S"
@@ -32,5 +32,6 @@ class OrderService:
             "remark": self.params.get('remark'),
             "created_at":get_current_datetime()
         }
-        self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload

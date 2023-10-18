@@ -9,6 +9,7 @@ class BaseCoordinator:
     def __init__(self, base_url=''):
         self.base_url = base_url
         self.mysql_conn = Config.MYSQL_CONN
+        self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
 
     def get_single_data_from_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
         column_sub_query = ','.join(column_list)
@@ -59,7 +60,9 @@ class BaseCoordinator:
         response = requests.get(
             self.action(path), params=payload, headers=headers, timeout=timeout)
         return response
-
+    
+    def push_data_in_queue(self, params, routing_key='', exchange=''):
+        self.rabbitmq_conn.push_message_to_queue(exchange, routing_key, json.dumps(params))
 
 class SSOCoordinator(BaseCoordinator):
 
