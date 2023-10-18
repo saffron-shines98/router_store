@@ -19,19 +19,13 @@ from config import Config
 
 def render_error_response(msg, status=None) -> Response:
     status = 500 if not status else status
-    body = {
-        's': 0,
-        'm': msg,
-        'd': dict()
-    }
+    body = {'error': msg}
     return Response(json.dumps(body), status, content_type='application/json')
 
 
 def render_success_response(response, msg='', status=1) -> Response:
     body = {
-        's': status,
-        'm': msg,
-        'd': response
+        'api_action_status': 'success'
     }
     return Response(json.dumps(body), status=200, content_type='application/json')
 
