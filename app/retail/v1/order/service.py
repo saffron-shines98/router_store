@@ -1,6 +1,7 @@
 from config import Config
 from datetime import datetime
 from app.common_utils import get_current_datetime
+from app.exceptions import AuthMissing
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -13,6 +14,8 @@ class OrderService:
     def update_order_status(self):
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
+        if not jwt_token:
+            raise AuthMissing('Auth token is missing')
         payload = {
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
