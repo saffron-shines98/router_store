@@ -2,6 +2,7 @@
 from datetime import datetime
 import mysql.connector as MySQLdb
 import redis
+import pika
 
 
 class SqlConnection(object):
@@ -96,3 +97,22 @@ class RedisConnection(object):
             redis_connection = redis.Redis(
                 host=redis_host, port=redis_port)
             return redis_connection
+        
+
+class RabbitMQConnection(object):
+
+    def __init__(self, url):
+        self.url = url
+        self.rabbit_conn = self.get_rabbitmq_connection()
+
+    def get_rabbitmq_connection(self):
+        connection = pika.BlockingConnection(pika.URLParameters(self.url))
+        channel = connection.channel()
+        return channel
+
+    def push_message_to_queue(self, exchange='', routing_key='', body=''):
+        try:
+            self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
+        except Exception as e:
+            self.rabbit_conn = self.get_rabbitmq_connection()
+            self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
