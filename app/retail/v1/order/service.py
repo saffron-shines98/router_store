@@ -1,5 +1,6 @@
 from config import Config
 from datetime import datetime
+import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.order.order_coordinator import OrderCoordinator
@@ -12,6 +13,12 @@ class OrderService:
         self.coordinator =OrderCoordinator()
 
     def update_order_status(self):
+        log_params = {
+            'request': json.dumps(self.params),
+            'headers': json.dumps(self.headers),
+            'created_at': get_current_datetime()
+        }
+        self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
