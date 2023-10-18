@@ -1,4 +1,5 @@
 from config import Config
+from app.exceptions import InvalidAuth
 from app.base_coordinator import BaseCoordinator,SSOCoordinator
 
 
@@ -12,5 +13,5 @@ class OrderCoordinator(BaseCoordinator):
         response = self.sso_coordinator.post('/verifyHeader', payload=payload, headers={'Authorization':Config.Authorization})
         if response.status_code == 200:
             return response.json().get('d')
-        raise Exception('Something Went wrong Please try again later')
+        raise InvalidAuth('Invalid auth token.')
 
