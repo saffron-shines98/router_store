@@ -55,8 +55,6 @@ class OrderService:
         self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        print(nodesso_id)
-        print(jwt_token)
         if not jwt_token:
             raise AuthMissing('Auth token is missing')
         payload = {
@@ -65,7 +63,6 @@ class OrderService:
         }
         self.coordinator.validate_jwt(payload)
         account_id = self.coordinator.get_account_id(self.params.get('customer_instance_id'))
-        print(account_id)
         customer_status_payload = {
             'firstname': self.params.get('customer_info').get('firstname'),
             'lastname': self.params.get('customer_info').get('lastname'),
