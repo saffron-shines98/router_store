@@ -16,3 +16,9 @@ class StatusUpdate(MethodView):
     def post(self, params, headers, *args, **kwargs):
         response = OrderService(params, headers).update_order_status()
         return render_success_response(response, msg='success')
+
+class CustomerStatusCreate(MethodView):
+    @validate_params(param_config=dict())
+    def post(self, params, headers, *args, **kwargs):
+        response = OrderService(params, headers).customer_status_create()
+        return render_success_response(response, msg='success')

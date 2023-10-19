@@ -15,3 +15,7 @@ class OrderCoordinator(BaseCoordinator):
             return response.json().get('d')
         raise InvalidAuth('Invalid auth token.')
 
+    def get_account_id(self, customer_instance):
+        query = 'select account_id from retail_customer where customer_instance = {} limit 1'.format(customer_instance)
+        return self.mysql_conn.query_db_one(query)
+
