@@ -63,28 +63,47 @@ class OrderService:
         }
         self.coordinator.validate_jwt(payload)
         account_id = self.coordinator.get_account_id(self.params.get('customer_instance_id'))
+        request_data = json.dumps(self.params)
+        location_payload= self.params.get('location')
+        for location in location_payload:
+            gps=location.get('gps')
+            city = location.get('city')
+            country= location.get('country')
+            area_code= location.get('area_code')
+            building = location.get('building')
+            is_default= location.get('is_default')
+            label = location.get('label')
+            locality = location.get('locality')
+            state = location.get('state')
+            street_name = location.get('street_name')
+            type = location.get('type')
+
         customer_status_payload = {
-            'firstname': self.params.get('customer_info').get('firstname'),
-            'lastname': self.params.get('customer_info').get('lastname'),
-            'birthdate': self.params.get('customer_info').get('birthdate'),
-            'alternate_customer_id': self.params.get('customer_info').get('alternate_customer_id'),
-            'source': self.params.get('customer_info').get('source'),
-            'phone': self.params.get('customer_info').get('contact').get('phone'),
-            'email': self.params.get('customer_info').get('contact').get('email'),
-            'gps': self.params.get('location').get('gps'),
-            'building': self.params.get('location').get('building'),
-            'street': self.params.get('location').get('name'),
-            'city': self.params.get('location').get('city'),
-            'locality': self.params.get('location').get('locality'),
-            'area_code': self.params.get('location').get('area_code'),
-            'state': self.params.get('location').get('state'),
-            'country': self.params.get('location').get('country'),
-            'label': self.params.get('location').get('label'),
-            'customer_instance_id': self.params.get('customer_instance_id'),
+            'firstname': self.params.get('customer_contact_info').get('firstname'),
+            'lastname': self.params.get('customer_contact_info').get('lastname'),
+            'birthdate': self.params.get('customer_contact_info').get('birthdate'),
+            'account_user_id': self.params.get('noderetail_account_user_id'),
+            'source': self.params.get('customer_contact_info').get('source'),
+            'phone': self.params.get('customer_contact_info').get('contact').get('phone'),
+            'email': self.params.get('customer_contact_info').get('contact').get('email'),
+            'otp_verified': self.params.get('customer_contact_info').get('customer_user_id').get('otp_verified'),
+            'customer_user_id_phone': self.params.get('customer_contact_info').get('customer_user_id').get('phone'),
+            'gps': gps,
+            'building': building,
+            'street': street_name,
+            'city': city,
+            'locality': locality,
+            'area_code': area_code,
+            'state': state,
+            'country': country,
+            'label': label,
+            'alternate_customer_id': self.params.get('customer_id'),
             'status': 1,
             'created_at': get_current_datetime(),
             'account_id': account_id.get('account_id'),
-            'created_by': 1
+            'created_by': 1,
+            'request': request_data,
+            'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
         self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
