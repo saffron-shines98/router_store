@@ -50,7 +50,6 @@ class OrderService:
 
     def customer_status_create(self):
         account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
-        print(account_id , "account_id")
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
