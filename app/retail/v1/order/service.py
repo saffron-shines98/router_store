@@ -130,7 +130,7 @@ class OrderService:
             'country': country,
             'label': label,
             'alternate_customer_id': self.params.get('customer_id'),
-            'status': 1,
+            'status': 0,
             'created_at': get_current_datetime(),
             'account_id': account_id.get('account_id'),
             'created_by': self.params.get('noderetail_account_user_id'),
