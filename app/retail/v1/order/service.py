@@ -16,9 +16,10 @@ class OrderService:
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
-            'created_at': get_current_datetime()
+            'created_at': get_current_datetime(),
+            'type' : 'order_status_update'
         }
-        self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
+        entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
@@ -40,19 +41,26 @@ class OrderService:
             "refund_status": self.params.get('refund_status'),
             "status_created_time": converted_date_time,
             "remark": self.params.get('remark'),
-            "created_at":get_current_datetime()
+            "created_at":get_current_datetime(),
+            "parent_id": entity
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
         self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload
 
     def customer_status_create(self):
+        account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        print(account_id , "account_id")
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
-            'created_at': get_current_datetime()
+            'created_at': get_current_datetime(),
+            'custom_data': json.dumps({'customer_instance_id' :self.params.get('customer_id')}),
+            'created_by' : self.params.get('noderetail_account_user_id'),
+            'account_id' : account_id.get('account_id'),
+            'type': 'customer_status_create'
         }
-        self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
+        entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
@@ -62,9 +70,7 @@ class OrderService:
             'auth_token': jwt_token
         }
         self.coordinator.validate_jwt(payload)
-        account_id = self.coordinator.get_account_id(self.params.get('customer_instance_id'))
-        request_data = json.dumps(self.params)
-        location_payload= self.params.get('location')
+        location_payload= self.params.get('locations')
         for location in location_payload:
             gps=location.get('gps')
             city = location.get('city')
@@ -77,17 +83,17 @@ class OrderService:
             state = location.get('state')
             street_name = location.get('street_name')
             type = location.get('type')
+            break
 
         customer_status_payload = {
             'firstname': self.params.get('customer_contact_info').get('firstname'),
             'lastname': self.params.get('customer_contact_info').get('lastname'),
             'birthdate': self.params.get('customer_contact_info').get('birthdate'),
-            'account_user_id': self.params.get('noderetail_account_user_id'),
             'source': self.params.get('customer_contact_info').get('source'),
-            'phone': self.params.get('customer_contact_info').get('contact').get('phone'),
+            'contact_phone': self.params.get('customer_contact_info').get('contact').get('phone'),
             'email': self.params.get('customer_contact_info').get('contact').get('email'),
             'otp_verified': self.params.get('customer_contact_info').get('customer_user_id').get('otp_verified'),
-            'customer_user_id_phone': self.params.get('customer_contact_info').get('customer_user_id').get('phone'),
+            'phone': self.params.get('customer_contact_info').get('customer_user_id').get('phone'),
             'gps': gps,
             'building': building,
             'street': street_name,
@@ -101,8 +107,9 @@ class OrderService:
             'status': 1,
             'created_at': get_current_datetime(),
             'account_id': account_id.get('account_id'),
-            'created_by': 1,
-            'request': request_data,
+            'created_by': self.params.get('noderetail_account_user_id'),
+            'parent_id' : entity,
+            'is_api': 1,
             'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
         self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
