@@ -26,15 +26,8 @@ class CustomerStatusCreate(MethodView):
     
 
 class OrderCreate(MethodView):
-    param_config = {
-        'type': 'object',
-        'properties': {
-            'node_instance_id': {
-                'type': 'number'
-            }
-        }
-    }
-    @validate_params(param_config=param_config)
+    
+    @validate_params(param_config=dict())
     def post(self, params, headers, *args, **kwargs):
         response = OrderService(params, headers).order_create()
         return render_success_response(response, msg='success')
