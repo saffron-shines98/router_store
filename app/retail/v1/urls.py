@@ -10,4 +10,7 @@ v1.add_url_rule(order_prefix + '/create', view_func=status_views.OrderCreate.as_
 
 
 customer_prefix = '/customer'
-v1.add_url_rule(customer_prefix + '/status/create', view_func=status_views.CustomerStatusCreate.as_view('customer_status_create'))
+v1.add_url_rule(customer_prefix + '/create', view_func=status_views.CustomerStatusCreate.as_view('customer_status_create'))
+
+# customer_prefix = '/vendor'
+# v1.add_url_rule(customer_prefix + '/status/create', view_func=status_views.CustomerStatusCreate.as_view('customer_status_create'))
