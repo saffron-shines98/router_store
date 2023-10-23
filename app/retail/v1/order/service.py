@@ -69,6 +69,14 @@ class OrderService:
             'auth_token': jwt_token
         }
         self.coordinator.validate_jwt(payload)
+        customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
+        customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
+        if not customer_contact_info_phone and customer_user_id_phone:
+            customer_contact_info_phone= customer_user_id_phone
+            self.params.get('customer_contact_info', {}).get('contact').update({'phone': customer_user_id_phone})
+        if not customer_user_id_phone and customer_contact_info_phone:
+            customer_user_id_phone=customer_contact_info_phone
+            self.params.get('customer_contact_info', {}).get('customer_user_id').update({'phone': customer_contact_info_phone})
         location_payload= self.params.get('locations')
         for location in location_payload:
             gps=location.get('gps')
@@ -83,16 +91,15 @@ class OrderService:
             street_name = location.get('street_name')
             type = location.get('type')
             break
-
         customer_status_payload = {
             'firstname': self.params.get('customer_contact_info').get('firstname'),
             'lastname': self.params.get('customer_contact_info').get('lastname'),
             'birthdate': self.params.get('customer_contact_info').get('birthdate'),
             'source': self.params.get('customer_contact_info').get('source'),
-            'contact_phone': self.params.get('customer_contact_info').get('contact').get('phone'),
+            'contact_phone': customer_contact_info_phone,
             'email': self.params.get('customer_contact_info').get('contact').get('email'),
             'otp_verified': self.params.get('customer_contact_info').get('customer_user_id').get('otp_verified'),
-            'phone': self.params.get('customer_contact_info').get('customer_user_id').get('phone'),
+            'phone': customer_user_id_phone,
             'gps': gps,
             'building': building,
             'street': street_name,
@@ -113,3 +120,6 @@ class OrderService:
         }
         self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
+
+    def customer_status_create(self):
+        pass
