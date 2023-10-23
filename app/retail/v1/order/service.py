@@ -17,7 +17,7 @@ class OrderService:
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'type' : 'order_status_update'
+            'type' : 'status'
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
@@ -57,7 +57,7 @@ class OrderService:
             'custom_data': json.dumps({'customer_instance_id' :self.params.get('customer_id')}),
             'created_by' : self.params.get('noderetail_account_user_id'),
             'account_id' : account_id.get('account_id'),
-            'type': 'customer_status_create'
+            'type': 'customer'
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
@@ -120,6 +120,3 @@ class OrderService:
         }
         self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
-
-    def customer_status_create(self):
-        pass
