@@ -43,6 +43,13 @@ class BaseCoordinator:
             return self.mysql_conn.write_db(query, tuple([data.get('val') for data in condition_params]))
         else:
             return self.mysql_conn.cursor.execute(query, tuple([data.get('val') for data in condition_params]))
+    
+    def save_data_in_db_with_place_holder(self, db_params, table_name, commit=True):
+        query = "insert into " + table_name + " (" + ",".join(db_params.keys()) + ") VALUES (" + ', '.join('%s' for v in db_params.values()) + ")"
+        if commit:
+            return self.mysql_conn.write_db(query, tuple([v for v in db_params.values()]))
+        else:
+            return self.mysql_conn.cursor.execute(query, tuple([v for v in db_params.values()]))
 
     @staticmethod
     def path_with_slash(path: str) -> str:

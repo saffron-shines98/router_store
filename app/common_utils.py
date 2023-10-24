@@ -12,9 +12,10 @@ import re
 from time import time
 import pysodium as nacl
 from hashlib import blake2b
-from app.base_coordinator import BaseCoordinator
+from app.base_coordinator import BaseCoordinator,SSOCoordinator
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
+from app.exceptions import InvalidAuth
 
 
 def render_error_response(msg, status=None) -> Response:
@@ -117,4 +118,10 @@ def verify_auth_header(payload, signature_string, public_key):
     except Exception as e:
         print(e, 'e')
         return False
+
+def validate_jwt(payload):
+    response = SSOCoordinator().post('/verifyHeader', payload=payload, headers={'Authorization': Config.Authorization})
+    if response.status_code == 200:
+        return response.json().get('d')
+    raise InvalidAuth('Invalid auth token.')
 
