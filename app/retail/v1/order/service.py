@@ -19,7 +19,7 @@ class OrderService:
             'created_at': get_current_datetime(),
             'type': type
         }
-        return self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
+        return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -39,7 +39,7 @@ class OrderService:
             'created_at': get_current_datetime(),
             'type' : 'status'
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
+        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
@@ -79,7 +79,7 @@ class OrderService:
             'account_id' : account_id.get('account_id'),
             'type': 'customer'
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
+        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
