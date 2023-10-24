@@ -8,12 +8,12 @@ class CreateProduct(MethodView):
     param_config = {
         'type': 'object',
         'properties': {
-            'attribute': {'type': 'object'},
+            'attributes': {'type': 'object'},
             'item_id': {'type': 'string'},
             'category': {'type': 'string'},
             'provider_id': {'type': 'string'},
         },
-        'required': ['item_id', 'category', 'provider_id', 'attribute']
+        'required': ['item_id', 'category', 'provider_id', 'attributes']
     }
     @validate_params(param_config=param_config)
     def post(self, params, headers, *args, **kwargs):
