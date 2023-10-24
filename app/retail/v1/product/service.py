@@ -15,7 +15,9 @@ class ProductService:
         self.coordinator = ProductCoordinator()
     
     def create_product_request_log(self):
-        self.headers.update({"Skip-Validation": self.headers.get('Skip-Validation') or "1"})
+        self.headers.update({"Skip-Validation": self.headers.get('Skip-Validation') or "1",
+                             "Storefront-Id": self.params.get('noderetail_storefront_id', ''),
+                             "Authorization": Config.API_ACCESS_KEY})
         db_params = {'payload': json.dumps(self.params), 'headers': json.dumps(self.headers),
             'status': 0, 'created_at': get_current_datetime(), 'created_by': 1}
         request_id = self.coordinator.save_data_in_db_with_place_holder(db_params, 'product_create_request_log')
