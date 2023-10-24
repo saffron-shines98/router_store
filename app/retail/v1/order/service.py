@@ -130,7 +130,7 @@ class OrderService:
             'country': country,
             'label': label,
             'alternate_customer_id': self.params.get('customer_id'),
-            'status': 1,
+            'status': 0,
             'created_at': get_current_datetime(),
             'account_id': account_id.get('account_id'),
             'created_by': self.params.get('noderetail_account_user_id'),
@@ -140,6 +140,7 @@ class OrderService:
         }
         self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
+
     
     def order_create(self):
         log_id = self.generate_api_logs(type='order')
@@ -201,7 +202,3 @@ class OrderService:
         }      
         self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
         return 'success'
-          
-
-    def customer_status_create(self):
-        pass
