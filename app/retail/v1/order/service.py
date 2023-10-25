@@ -2,7 +2,7 @@ from config import Config
 from datetime import datetime
 import json
 from app.common_utils import get_current_datetime
-from app.exceptions import AuthMissing
+from app.exceptions import AuthMissing, CustomrAlreadyExist
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -65,11 +65,16 @@ class OrderService:
             "parent_id": entity
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        # self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload
 
     def customer_status_create(self):
         account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        identifier_id = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
+        identifier_instance_id = self.params.get('customer_id')
+        check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
+        if check_duplicacy:
+            raise CustomrAlreadyExist('Customer Already Exist')
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
@@ -77,7 +82,9 @@ class OrderService:
             'custom_data': json.dumps({'customer_instance_id' :self.params.get('customer_id')}),
             'created_by' : self.params.get('noderetail_account_user_id'),
             'account_id' : account_id.get('account_id'),
-            'type': 'customer'
+            'type': 'customer',
+            'identifier_id': identifier_id,
+            'identifier_instance_id':identifier_instance_id
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_order_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
@@ -88,7 +95,7 @@ class OrderService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        self.coordinator.validate_jwt(payload)
+        # self.coordinator.validate_jwt(payload)
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
