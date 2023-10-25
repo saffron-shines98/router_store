@@ -65,7 +65,7 @@ class OrderService:
             "parent_id": entity
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        # self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload
 
     def customer_status_create(self):
