@@ -39,6 +39,8 @@ def validate_params(param_config=None, token_required=True):
                 headers = extract_headers(request)
                 validate(params, param_config, format_checker=FormatChecker())
                 return func(params=params, headers=headers, *args, **kwargs)
+            except (ValidationError, SchemaError) as e:
+                return render_error_response('Invalid Input Fields', 400)
             except AuthMissing as e:
                 return render_error_response(e.message, e.http_code)
             except InvalidAuth as e:
