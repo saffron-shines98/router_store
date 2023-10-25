@@ -1,7 +1,7 @@
 from flask import request
 from functools import wraps
 from app.common_utils import render_error_response
-from app.exceptions import AuthMissing, InvalidAuth
+from app.exceptions import AuthMissing, InvalidAuth, CustomrAlreadyExist
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
 
@@ -43,8 +43,10 @@ def validate_params(param_config=None, token_required=True):
                 return render_error_response(e.message, e.http_code)
             except InvalidAuth as e:
                 return render_error_response(e.message, e.http_code)
-            except Exception as e:
-                return render_error_response('Something went wrong. Please try again later.', 500)
+            except CustomrAlreadyExist as e:
+                return render_error_response(e.message, e.http_code)
+            # except Exception as e:
+            #     return render_error_response('Something went wrong. Please try again later.', 500)
         return decorated_function
 
     return deco
