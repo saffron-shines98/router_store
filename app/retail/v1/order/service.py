@@ -95,7 +95,7 @@ class OrderService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        # self.coordinator.validate_jwt(payload)
+        self.coordinator.validate_jwt(payload)
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
