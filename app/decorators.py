@@ -45,8 +45,8 @@ def validate_params(param_config=None, token_required=True):
                 return render_error_response(e.message, e.http_code)
             except CustomrAlreadyExist as e:
                 return render_error_response(e.message, e.http_code)
-            # except Exception as e:
-            #     return render_error_response('Something went wrong. Please try again later.', 500)
+            except Exception as e:
+                return render_error_response('Something went wrong. Please try again later.', 500)
         return decorated_function
 
     return deco
