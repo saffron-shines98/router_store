@@ -1,8 +1,8 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime
-from app.exceptions import AuthMissing
+from app.common_utils import get_current_datetime, clean_string
+from app.exceptions import AuthMissing, CustomrAlreadyExist
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -70,14 +70,21 @@ class OrderService:
 
     def customer_status_create(self):
         account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        identifier_id = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
+        identifier_instance_id = self.params.get('noderetail_customer_instance_id')
+        check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
+        if check_duplicacy:
+            raise CustomrAlreadyExist('Customer Already Exist')
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'custom_data': json.dumps({'customer_instance_id' :self.params.get('customer_id')}),
+            'custom_data': json.dumps({'customer_instance_id': self.params.get('noderetail_customer_instance_id')}),
             'created_by' : self.params.get('noderetail_account_user_id'),
             'account_id' : account_id.get('account_id'),
-            'type': 'customer'
+            'type': 'customer',
+            'identifier_id': identifier_id,
+            'identifier_instance_id':identifier_instance_id
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         jwt_token = self.headers.get('Auth-Token')
@@ -103,12 +110,12 @@ class OrderService:
             city = location.get('city')
             country= location.get('country')
             area_code= location.get('area_code')
-            building = location.get('building')
+            building = clean_string(location.get('building', ''))
             is_default= location.get('is_default')
             label = location.get('label')
-            locality = location.get('locality')
+            locality = clean_string(location.get('locality', ''))
             state = location.get('state')
-            street_name = location.get('street_name')
+            street_name = clean_string(location.get('street_name', ''))
             type = location.get('type')
             break
         customer_status_payload = {

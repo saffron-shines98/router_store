@@ -11,6 +11,11 @@ class InvalidAuth(Exception):
         self.message = message
         super(InvalidAuth, self).__init__()
 
+class CustomrAlreadyExist(Exception):
+    def __init__(self, message, error_code= 400):
+        self.http_code = error_code
+        self.message = message
+        super(CustomrAlreadyExist, self).__init__()
 
 class AlreadyExists(Exception):
     def __init__(self, message, error_code=403):
