@@ -1,7 +1,7 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime
+from app.common_utils import get_current_datetime, clean_string
 from app.exceptions import AuthMissing, CustomrAlreadyExist
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
@@ -79,7 +79,7 @@ class OrderService:
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'custom_data': json.dumps({'customer_instance_id' :self.params.get('customer_id')}),
+            'custom_data': json.dumps({'customer_instance_id': self.params.get('noderetail_customer_instance_id')}),
             'created_by' : self.params.get('noderetail_account_user_id'),
             'account_id' : account_id.get('account_id'),
             'type': 'customer',
@@ -110,12 +110,12 @@ class OrderService:
             city = location.get('city')
             country= location.get('country')
             area_code= location.get('area_code')
-            building = location.get('building')
+            building = clean_string(location.get('building', ''))
             is_default= location.get('is_default')
             label = location.get('label')
-            locality = location.get('locality')
+            locality = clean_string(location.get('locality', ''))
             state = location.get('state')
-            street_name = location.get('street_name')
+            street_name = clean_string(location.get('street_name', ''))
             type = location.get('type')
             break
         customer_status_payload = {

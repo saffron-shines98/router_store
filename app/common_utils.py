@@ -125,3 +125,8 @@ def validate_jwt(payload):
         return response.json().get('d')
     raise InvalidAuth('Invalid auth token.')
 
+def clean_string(string):
+    trimmed_string = string.strip()
+    cleaned_string = re.sub(r'\s+', ' ', trimmed_string)
+    cleaned_string = cleaned_string.replace("'", '').replace("\r", ' ').replace("\n", ' ')
+    return cleaned_string
