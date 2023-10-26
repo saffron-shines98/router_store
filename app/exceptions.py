@@ -16,3 +16,9 @@ class CustomrAlreadyExist(Exception):
         self.http_code = error_code
         self.message = message
         super(CustomrAlreadyExist, self).__init__()
+
+class AlreadyExists(Exception):
+    def __init__(self, message, error_code=403):
+        self.http_code = error_code
+        self.message = message
+        super(AlreadyExists, self).__init__()
