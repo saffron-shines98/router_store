@@ -22,3 +22,10 @@ class AlreadyExists(Exception):
         self.http_code = error_code
         self.message = message
         super(AlreadyExists, self).__init__()
+
+class InvalidDateFormat(Exception):
+    def __init__(self, message, error_code=400):
+        self.http_code = error_code
+        self.message = message
+        super(InvalidDateFormat, self).__init__()
+
