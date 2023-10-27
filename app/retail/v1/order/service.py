@@ -209,9 +209,9 @@ class OrderService:
         }      
         self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
         params = {
-            'payment_mode': self.params.get('payment_mode'),
-            'payment_transaction_id': self.params.get('payment_transaction_id'),
-            'payment_status': 1 if self.params.get('payment_status') == 'paid' else 0,
+            'payment_mode': payment_info.get('payment_mode'),
+            'payment_transaction_id': payment_info.get('payment_transaction_id'),
+            'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0,
             'created_at': get_current_datetime()
         }
         self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
