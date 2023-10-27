@@ -2,7 +2,7 @@ from config import Config
 from datetime import datetime
 import json
 from app.common_utils import get_current_datetime, clean_string
-from app.exceptions import AuthMissing, CustomrAlreadyExist
+from app.exceptions import AuthMissing, CustomrAlreadyExist, InvalidDateFormat
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -48,11 +48,13 @@ class OrderService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        self.coordinator.validate_jwt(payload)
-        created_time = self.params.get('status_created_time')
-        input_format = "%d:%m:%Y %H:%M:%S"
+        # self.coordinator.validate_jwt(payload)
+        format_to_check= "%d:%m:%Y %H:%M:%S"
+        try:
+            parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
+        except Exception as e:
+            raise InvalidDateFormat("Invalid Date format Please refer document")
         output_format = "%Y:%m:%d %H:%M:%S"
-        parsed_date = datetime.strptime(created_time, input_format)
         converted_date_time = parsed_date.strftime(output_format)
         order_payload = {
             "order_id": self.params.get('order_id'),
@@ -62,10 +64,10 @@ class OrderService:
             "status_created_time": converted_date_time,
             "remark": self.params.get('remark'),
             "created_at":get_current_datetime(),
-            "parent_id": entity
+            # "parent_id": entity
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        # self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload
 
     def customer_status_create(self):
