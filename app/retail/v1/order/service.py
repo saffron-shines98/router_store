@@ -48,7 +48,7 @@ class OrderService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        # self.coordinator.validate_jwt(payload)
+        self.coordinator.validate_jwt(payload)
         format_to_check= "%d:%m:%Y %H:%M:%S"
         try:
             parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
@@ -64,10 +64,10 @@ class OrderService:
             "status_created_time": converted_date_time,
             "remark": self.params.get('remark'),
             "created_at":get_current_datetime(),
-            # "parent_id": entity
+            "parent_id": entity
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        # self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         return order_payload
 
     def customer_status_create(self):
