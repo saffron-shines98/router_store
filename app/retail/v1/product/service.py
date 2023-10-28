@@ -19,7 +19,8 @@ class ProductService:
                              "Storefront-Id": self.params.get('noderetail_storefront_id', ''),
                              "Authorization": Config.API_ACCESS_KEY})
         db_params = {'request': json.dumps(self.params), 'headers': json.dumps(self.headers),
-            'status': 0, 'created_at': get_current_datetime(), 'created_by': 1, 'type': 'product'}
+            'status': 0, 'created_at': get_current_datetime(), 'created_by': 1, 'type': 'product',
+            'identifier_id': self.params.get('item_id', '')}
         entity_id = self.coordinator.save_data_in_db_with_place_holder(db_params, 'plotch_noderetailapi_request_logs')
         self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'product_create_request_log_q')
         if not self.headers.get('Auth-Token', ''):
