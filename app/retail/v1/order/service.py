@@ -2,7 +2,7 @@ from config import Config
 from datetime import datetime
 import json
 from app.common_utils import get_current_datetime, clean_string
-from app.exceptions import AuthMissing, CustomrAlreadyExist
+from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -17,7 +17,9 @@ class OrderService:
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'type': type
+            'type': type,
+            'identifier_id': self.params.get('order_id'),
+            'identifier_instance_id': self.params.get('noderetail_order_instance_id')
         }
         return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
@@ -49,10 +51,12 @@ class OrderService:
             'auth_token': jwt_token
         }
         self.coordinator.validate_jwt(payload)
-        created_time = self.params.get('status_created_time')
-        input_format = "%d:%m:%Y %H:%M:%S"
+        format_to_check= "%d:%m:%Y %H:%M:%S"
+        try:
+            parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
+        except Exception as e:
+            raise InvalidDateFormat("Invalid Date format Please refer document")
         output_format = "%Y:%m:%d %H:%M:%S"
-        parsed_date = datetime.strptime(created_time, input_format)
         converted_date_time = parsed_date.strftime(output_format)
         order_payload = {
             "order_id": self.params.get('order_id'),
@@ -73,8 +77,6 @@ class OrderService:
         identifier_id = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         identifier_instance_id = self.params.get('noderetail_customer_instance_id')
         check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
-        if check_duplicacy:
-            raise CustomrAlreadyExist('Customer Already Exist')
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
@@ -87,6 +89,8 @@ class OrderService:
             'identifier_instance_id':identifier_instance_id
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        if check_duplicacy:
+            raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
@@ -150,7 +154,12 @@ class OrderService:
 
     
     def order_create(self):
+        identifier_id = self.params.get('order_id')
+        identifier_instance_id = self.params.get('noderetail_order_instance_id')
+        check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
         log_id = self.generate_api_logs(type='order')
+        if check_duplicacy:
+            raise AlreadyExists('Order Already Exist')
         self.authenticate_user()
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
