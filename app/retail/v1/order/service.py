@@ -217,4 +217,11 @@ class OrderService:
             'is_api': 1
         }      
         self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
+        params = {
+            'payment_mode': payment_info.get('payment_mode'),
+            'payment_transaction_id': payment_info.get('payment_transaction_id'),
+            'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0,
+            'created_at': get_current_datetime()
+        }
+        self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
         return 'success'

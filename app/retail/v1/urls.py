@@ -2,6 +2,7 @@ from flask import Blueprint
 from app.retail.v1.order import views as status_views
 from app.retail.v1.product import views as product_view
 from app.retail.v1.vendor import views as vendor_view
+from app.retail.v1.inventory import views as inventory_view
 
 v1 = Blueprint('v1', __name__)
 
@@ -21,3 +22,6 @@ v1.add_url_rule(vendor_prefix + '/create', view_func=vendor_view.VendorCreate.as
 
 product_prefix = '/product'
 v1.add_url_rule(product_prefix + '/create', view_func=product_view.CreateProduct.as_view('create_productr_request_log'))
+
+inventory_prefix = '/inventory'
+v1.add_url_rule(inventory_prefix + '/update', view_func=inventory_view.InventoryUpdate.as_view('inventory_updates'))
