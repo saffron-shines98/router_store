@@ -25,7 +25,6 @@ class OrderCoordinator(BaseCoordinator):
 
     def customer_check_duplicacy(self, identifier_instance, identifier):
         query = '''select entity_id from plotch_customer_importer_data where alternate_customer_id = '{}' and customer_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
-        print(query)
         return self.mysql_conn.query_db_one(query)
 
 
