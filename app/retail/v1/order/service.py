@@ -74,9 +74,9 @@ class OrderService:
 
     def customer_status_create(self):
         account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
-        identifier_id = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
+        identifier_id = self.params.get('customer_id')
         identifier_instance_id = self.params.get('noderetail_customer_instance_id')
-        check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
+        check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
