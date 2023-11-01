@@ -4,6 +4,7 @@ import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
+from app.common_utils import validate_jwt
 import math
 
 class CatalogService:
@@ -21,7 +22,7 @@ class CatalogService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        self.coordinator.validate_jwt(payload)
+        validate_jwt(payload)
 
     def fetch_catalog(self):
         # self.authenticate_user()
@@ -34,7 +35,6 @@ class CatalogService:
             catalog = ""
         crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
         catalog_id = crs_catalog.get('catalog_id')
-        crs_products_count = self.coordinator.get_single_data_from_db('crs_products', [{'col':'catalog_id', 'val': catalog_id}], ['count(1) as count'])
         condition_str = ''
         if self.params.get('noderetail_provider_id'):
             condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
@@ -42,6 +42,10 @@ class CatalogService:
             condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
         if self.params.get('noderetail_category_id'):
             condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
+        if self.params.get('noderetail_agg_id'):
+            retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
+            if retail_user_instance_data:
+                condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
         joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size', 10), self.params.get('page_number', 1))
 
         items = []
@@ -100,4 +104,4 @@ class CatalogService:
                         "attributes": {}}
             response.get('attributes').update(other_params)
             items.append(response)
-        return {'items':items, "total_size":crs_products_count.get('count',0), "total_pages": int(math.ceil(float(crs_products_count.get('count', 0)) / int(self.params.get('page_size') or self.parmas.get('page_number'))))}
+        return {'items':items}
