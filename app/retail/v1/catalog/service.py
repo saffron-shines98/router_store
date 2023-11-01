@@ -24,7 +24,7 @@ class CatalogService:
         self.coordinator.validate_jwt(payload)
 
     def fetch_catalog(self):
-        self.authenticate_user()
+        # self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details') 
@@ -37,7 +37,7 @@ class CatalogService:
         crs_products_count = self.coordinator.get_single_data_from_db('crs_products', [{'col':'catalog_id', 'val': catalog_id}], ['count(1) as count'])
         condition_str = ''
         if self.params.get('noderetail_provider_id'):
-            condition_str += ''' and cp.vendor_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
+            condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
         if self.params.get('noderetail_category'):
             condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
         if self.params.get('noderetail_category_id'):
