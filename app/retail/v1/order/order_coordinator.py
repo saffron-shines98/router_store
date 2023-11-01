@@ -16,11 +16,13 @@ class OrderCoordinator(BaseCoordinator):
         raise InvalidAuth('Invalid auth token.')
 
     def get_account_id(self, customer_instance):
-        query = 'select account_id from retail_customer where customer_instance = {} limit 1'.format(customer_instance)
-        return self.mysql_conn.query_db_one(query)
-    
-    def check_duplicacy(self, identifier, identifier_instance):
-        query = "select entity_id from plotch_noderetailapi_request_logs where identifier_id = '{}' and identifier_instance_id = {} limit 1".format(identifier, identifier_instance)
+        query = '''select account_id from retail_customer where customer_instance = '{}' limit 1'''.format(customer_instance)
         return self.mysql_conn.query_db_one(query)
 
+    def check_order_duplicacy(self, identifier, identifier_instance):
+        query = '''select entity_id from plotch_noderetailapi_request_logs where identifier_id = '{}' and identifier_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
+        return self.mysql_conn.query_db_one(query)
 
+    def customer_check_duplicacy(self, identifier_instance, identifier):
+        query = '''select entity_id from plotch_customer_importer_data where alternate_customer_id = '{}' and customer_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
+        return self.mysql_conn.query_db_one(query)
