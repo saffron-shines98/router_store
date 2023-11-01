@@ -20,7 +20,7 @@ class OrderCoordinator(BaseCoordinator):
         return self.mysql_conn.query_db_one(query)
 
     def check_order_duplicacy(self, identifier, identifier_instance):
-        query = '''select entity_id from plotch_noderetailapi_request_logs where identifier_id = '{}' and identifier_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
+        query = '''select entity_id from plotch_order_importer_data where order_id = '{}' and storefront_id = '{}' limit 1'''.format(identifier, identifier_instance)
         return self.mysql_conn.query_db_one(query)
 
     def customer_check_duplicacy(self, identifier_instance, identifier):
