@@ -19,6 +19,6 @@ class CatalogCoordinator(BaseCoordinator):
         query = f"""select cp.*, pisi.qty as inventory_qty from crs_products cp 
                     LEFT JOIN plotch_inventory_summary_item pisi 
                     ON cp.product_id=pisi.product_id 
-                    where cp.catalog_id='{catalog_id}' AND pisi.qty>0 {condition_str} limit {limit} offset {int(limit)*int(current_page)-1};"""
+                    where cp.catalog_id='{catalog_id}' AND pisi.qty>0 {condition_str} order by id desc limit {limit} offset {int(limit)*int(current_page)-1};"""
         return self.mysql_conn.query_db(query=query)
 

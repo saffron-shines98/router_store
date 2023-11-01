@@ -71,8 +71,8 @@ class CatalogService:
                         "location_id": [],
                         "inventory_info": {
                             "qty": str(product_data.get('inventory_qty')),
-                            "min_qty": "10",
-                            "max_qty": "1",
+                            "min_qty": "",
+                            "max_qty": "",
                             "is_in_stock": "1"
                         },
                         "pricing_info": {
@@ -83,55 +83,21 @@ class CatalogService:
                             "discounted_price":  str(product_data.get('discounted_price', '')),
                         },
                         "provider_info": {
-                            "store_name": "",
+                            "store_name": product_data.get('brand_name') or other_params.get('brand_name', ''),
                             "brand_logo": "",
-                            "long_desc": "",
-                            "short_desc": "",
-                            "store_images": [
-                            "string-image-url"
-                            ],
-                            "fssai_license_num": "",
-                            "serviceability": [
-                            {
-                                "mode": "hyperlocal/pincode/pan-india",
-                                "radius": "number",
-                                "unit": "km"
-                            }
-                            ],
-                            "locations": [
-                            {
-                                "id": "",
-                                "gps": "",
-                                "type": "billing/shipping",
-                                "address": {
-                                "city": "",
-                                "state": "",
-                                "street": "",
-                                "area_code": "",
-                                "locality": ""},
-                                "schedule": {
-                                "open_days": "1,2,3,4,5,6,7",
-                                "open_hours": [
-                                    {
-                                    "start_time": "",
-                                    "end_time": ""
-                                    }]}}]
-                        },
-                        "images": [
-                        ],
-                        "attributes": {
-                            "brand": "","color": "","size": "","gender": "","pattern": "","material": "",
-                            "occasion": "","season": "","trend": "","features": "","material_finish": "",
-                            "size_chart": "","fulfillment_mode": "","available_on_cod": False,"cancellable": False,
-                            "rateable": False,"return_pickup": False,"return_window": "P7D","returnable": True,
-                            "time_to_ship": "P2D","common_or_generic_name_of_commodity": "","imported_product_country_of_origin": "",
-                            "manufacturer_address": "","manufacturer_name": "","measure_of_commodity_in_pkg": "",
-                            "month_year_of_manufacture_packing_import": "","nutritional_info": "",
-                            "additives_info": "","brand_owner_fssai_license_no": "",
-                            "other_fssai_license_no": "","importer_fssai_license_no": "",
-                            "is_veg": ""}
-                        }
-            response.update(other_params)
+                            "long_desc": other_params.get('long_desc', ''),
+                            "short_desc": other_params.get('short_desc', ''),
+                            "store_images": [],
+                            "fssai_license_num": product_data.get('fssai_number', ''),
+                            "serviceability": [{
+                                "mode": "hyperlocal/pincode/pan-india","radius": "number",
+                                "unit": "km"}],
+                            "locations": [{
+                                "id": "","gps": "","type": "billing/shipping",
+                                "address": {"city": "","state": "","street": "","area_code": "","locality": ""},
+                                "schedule": {"open_days": "","open_hours": [{"start_time": "","end_time": ""}]}}]},
+                        "images": [],
+                        "attributes": {}}
+            response.get('attributes').update(other_params)
             items.append(response)
-                           
         return {'items':items, "total_size":crs_products_count.get('count',0), "total_pages": int(math.ceil(float(crs_products_count.get('count', 0)) / int(self.params.get('page_size') or self.parmas.get('page_number'))))}
