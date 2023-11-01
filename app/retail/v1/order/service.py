@@ -156,7 +156,7 @@ class OrderService:
     def order_create(self):
         identifier_id = self.params.get('order_id')
         identifier_instance_id = self.params.get('noderetail_order_instance_id')
-        check_duplicacy = self.coordinator.check_duplicacy(identifier_instance_id, identifier_id)
+        check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             raise AlreadyExists('Order Already Exist')
