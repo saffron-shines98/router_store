@@ -30,6 +30,13 @@ def render_success_response(response, msg='', status=1) -> Response:
     }
     return Response(json.dumps(body), status=200, content_type='application/json')
 
+def render_success_response_with_body(response, msg='', status=1) -> Response:
+    body = {
+        'api_action_status': 'success'
+    }
+    if response:
+        body.update(response)
+    return Response(json.dumps(body), status=200, content_type='application/json')
 
 def validate_request_payload(payload, schema):
     try:
