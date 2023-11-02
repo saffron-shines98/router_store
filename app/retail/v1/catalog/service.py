@@ -28,7 +28,7 @@ class CatalogService:
         self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
-        instance_details = plotch_instance.get('instance_details') 
+        instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
         except :
@@ -47,7 +47,6 @@ class CatalogService:
             if retail_user_instance_data:
                 condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
         joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size', 10), self.params.get('page_number', 1))
-
         items = []
         for product_data in joined_result:
             try:
@@ -93,15 +92,14 @@ class CatalogService:
                             "short_desc": other_params.get('short_desc', ''),
                             "store_images": [],
                             "fssai_license_num": product_data.get('fssai_number', ''),
-                            "serviceability": [{
-                                "mode": "hyperlocal/pincode/pan-india","radius": "number",
-                                "unit": "km"}],
-                            "locations": [{
-                                "id": "","gps": "","type": "billing/shipping",
-                                "address": {"city": "","state": "","street": "","area_code": "","locality": ""},
-                                "schedule": {"open_days": "","open_hours": [{"start_time": "","end_time": ""}]}}]},
+                            "serviceability": [],
+                            "locations": []
+                            },
                         "images": [],
                         "attributes": {}}
+            keys_to_be_removed = ["provider_id", "circle_radius", "bpp_uri", "locations", "long_desc", "storefront_timing", 
+                                  "short_desc", "city_code", "product_hash", "ntags", "days", "bpp_id"]
+            other_params = {key: value for key, value in other_params.items() if key not in keys_to_be_removed}
             response.get('attributes').update(other_params)
             items.append(response)
         return {'items':items}
