@@ -33,7 +33,7 @@ class PriceService:
         self.coordinator.validate_jwt(payload)
 
     def update_price(self):
-        self.generate_api_logs('price', self.params.get('noderetail_item_id'), self.params.get('noderetail_storefront_id'))
+        entity_id = self.generate_api_logs('price', self.params.get('noderetail_item_id'), self.params.get('noderetail_storefront_id'))
         self.authenticate_user()
-        self.coordinator.push_data_in_queue(self.params, 'noderetail_price_update_sync_q')
+        self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
         return {}
