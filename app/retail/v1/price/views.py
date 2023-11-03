@@ -9,11 +9,8 @@ class PriceUpdate(MethodView):
             'item_id': {
                 'type': 'string'
             },
-            'mrp': {
-                'type': 'number'
-            },
-            'storefront_instance_id': {
-                'type': 'number'
+            'noderetail_storefront_id': {
+                'type': 'string'
             }
         }
     }
