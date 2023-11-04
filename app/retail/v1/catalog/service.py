@@ -23,6 +23,31 @@ class CatalogService:
             'auth_token': jwt_token
         }
         validate_jwt(payload)
+    
+    def extract_image_url(self, image_params):
+        if 'http' in image_params:
+            return image_params
+        else:
+            return Config.IMAGE_BASE_URL_FOR_CDN_AZ + image_params
+
+    def extract_image_from_params(self, product_data, other_params):
+        image_list = list()
+        if product_data.get('main_image') or other_params.get('main_image'):
+            main_image = product_data.get('main_image') or other_params.get('main_image')
+            image_list.append(self.extract_image_url(main_image))
+        if product_data.get('image1') or other_params.get('image1'):
+            main_image = product_data.get('image1') or other_params.get('image1')
+            image_list.append(self.extract_image_url(main_image))
+        if product_data.get('image2') or other_params.get('image2'):
+            main_image = product_data.get('image2') or other_params.get('image2')
+            image_list.append(self.extract_image_url(main_image))
+        if product_data.get('image3') or other_params.get('image3'):
+            main_image = product_data.get('image3') or other_params.get('image3')
+            image_list.append(self.extract_image_url(main_image))
+        if product_data.get('image4') or other_params.get('image4'):
+            main_image = product_data.get('image4') or other_params.get('image4')
+            image_list.append(self.extract_image_url(main_image))
+        return image_list
 
     def fetch_catalog(self):
         self.authenticate_user()
@@ -46,24 +71,28 @@ class CatalogService:
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
                 condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
-        joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size', 10), self.params.get('page_number', 1))
+        noderetail_catalog_id = ''
+        if catalog_id and self.params.get('noderetail_catalog_id'):
+            noderetail_catalog_id = catalog_id
+        joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
         items = []
         for product_data in joined_result:
             try:
                 other_params = json.loads(product_data.get('other_params'), strict=False)
             except:
                 other_params = dict()
+            images = self.extract_image_from_params(product_data, other_params)
             response =  {
                         "item_id": product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', ''),
                         "noderetail_account_user_id": product_data.get('account_id', ''),
-                        "noderetail_catalog_id": product_data.get('catalog_id', ''),
+                        "noderetail_catalog_id": noderetail_catalog_id,
                         "noderetail_storefront_id": self.params.get('noderetail_storefront_id', ''),
                         "noderetail_item_id": "",
                         "noderetail_provider_id": "",
                         "noderetail_category": product_data.get('category_name'),
                         "noderetail_category_id": product_data.get('category_id'),
-                        "noderetail_product_url": "https://www.craftsvilla.com/product/" + str(product_data.get('product_id', '')),
+                        "noderetail_product_url": "https://www.craftsvilla.com/product/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "product_type": "simple",
                         "name": product_data.get('product_name', ''),
                         "description": product_data.get('description', ''),
@@ -95,7 +124,7 @@ class CatalogService:
                             "serviceability": [],
                             "locations": []
                             },
-                        "images": [],
+                        "images": images,
                         "attributes": {}}
             keys_to_be_removed = ["provider_id", "circle_radius", "bpp_uri", "locations", "long_desc", "storefront_timing", 
                                   "short_desc", "city_code", "product_hash", "ntags", "days", "bpp_id"]
