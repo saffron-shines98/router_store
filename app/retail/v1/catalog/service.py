@@ -76,6 +76,7 @@ class CatalogService:
             noderetail_catalog_id = catalog_id
         joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
         items = []
+        domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
             try:
                 other_params = json.loads(product_data.get('other_params'), strict=False)
@@ -83,16 +84,16 @@ class CatalogService:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
             response =  {
-                        "item_id": product_data.get('ondc_item_id', ''),
-                        "provider_id": product_data.get('seller_id', ''),
-                        "noderetail_account_user_id": product_data.get('account_id', ''),
+                        "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
+                        "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
+                        "noderetail_account_user_id": self.params.get('noderetail_account_user_id', ''),
                         "noderetail_catalog_id": noderetail_catalog_id,
                         "noderetail_storefront_id": self.params.get('noderetail_storefront_id', ''),
-                        "noderetail_item_id": "",
-                        "noderetail_provider_id": "",
+                        "noderetail_item_id": product_data.get('product_id'),
+                        "noderetail_provider_id":  product_data.get('seller_id', '') or product_data.get('vendor_id'),
                         "noderetail_category": product_data.get('category_name'),
                         "noderetail_category_id": product_data.get('category_id'),
-                        "noderetail_product_url": "https://www.craftsvilla.com/product/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
+                        "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "product_type": "simple",
                         "name": product_data.get('product_name', ''),
                         "description": product_data.get('description', ''),
@@ -115,7 +116,7 @@ class CatalogService:
                             "discounted_price":  str(product_data.get('discounted_price', '')),
                         },
                         "provider_info": {
-                            "store_name": product_data.get('brand_name') or other_params.get('brand_name', ''),
+                            "store_name": product_data.get('vendor_name') or other_params.get('vendor_name', ''),
                             "brand_logo": "",
                             "long_desc": other_params.get('long_desc', ''),
                             "short_desc": other_params.get('short_desc', ''),
