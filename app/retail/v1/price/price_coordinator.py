@@ -1,5 +1,4 @@
 from config import Config
-from app.exceptions import InvalidAuth
 from app.base_coordinator import BaseCoordinator,SSOCoordinator
 
 
