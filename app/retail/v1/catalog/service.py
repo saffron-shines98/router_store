@@ -89,7 +89,7 @@ class CatalogService:
                         "noderetail_account_user_id": self.params.get('noderetail_account_user_id', ''),
                         "noderetail_catalog_id": noderetail_catalog_id,
                         "noderetail_storefront_id": self.params.get('noderetail_storefront_id', ''),
-                        "noderetail_item_id": product_data.get('product_id'),
+                        "noderetail_item_id": str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "noderetail_provider_id":  product_data.get('seller_id', '') or product_data.get('vendor_id'),
                         "noderetail_category": product_data.get('category_name'),
                         "noderetail_category_id": product_data.get('category_id'),
