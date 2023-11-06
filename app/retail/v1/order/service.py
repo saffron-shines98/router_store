@@ -12,14 +12,14 @@ class OrderService:
         self.headers = headers
         self.coordinator =OrderCoordinator()
 
-    def generate_api_logs(self, type):
+    def generate_api_logs(self, type=None):
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
             'type': type,
-            'identifier_id': self.params.get('item_id'),
-            'identifier_instance_id': self.params.get('noderetail_storefront_id')
+            'identifier_id': self.params.get('order_id'),
+            'identifier_instance_id': self.params.get('noderetail_order_instance_id')
         }
         return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
@@ -228,6 +228,6 @@ class OrderService:
 
     def order_status(self):
         entity_id = self.generate_api_logs('order')
-        #self.authenticate_user()
+        self.authenticate_user()
         self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_order_status_fetch_q')
         return {}
