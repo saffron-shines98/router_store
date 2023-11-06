@@ -7,19 +7,7 @@ class FetchCatalog(MethodView):
     param_config = {
         'type': 'object',
         'properties': {
-            'item_id': {'type': 'string'},
-            'provider_id': {'type': 'string'},
-            'noderetail_account_user_id': {'type': 'string'},
-            'noderetail_catalog_id':{'type': 'string'},
-            'noderetail_storefront_id':{'type': 'string'},
-            'noderetail_item_id': {'type': 'string'},
-            'noderetail_provider_id': {'type': 'string'},
-            'noderetail_category': {'type': 'string'},
-            'noderetail_category_id': {'type': 'string'},
-            'noderetail_agg_id': {'type': 'string'},
-            'inventory_info': {'type': 'object'},
-            'pricing_info': {'type': 'object'},
-            'attributes': {'type': 'object'},
+            'noderetail_storefront_id':{'type': 'string'}
         },
         'required': ['noderetail_storefront_id']
     }
