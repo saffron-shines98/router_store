@@ -2,6 +2,8 @@ from flask.views import MethodView
 from app.decorators import validate_params
 from app.common_utils import render_success_response
 from app.retail.v1.price.service import PriceService
+
+
 class PriceUpdate(MethodView):
     param_config = {
         'type': 'object',
