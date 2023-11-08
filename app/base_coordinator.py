@@ -2,6 +2,7 @@ import json
 import requests
 from config import Config
 from flask import Response
+from app.exceptions import InvalidAuth, AuthMissing
 
 
 class BaseCoordinator:
@@ -70,6 +71,23 @@ class BaseCoordinator:
     
     def push_data_in_queue(self, params, routing_key='', exchange=''):
         self.rabbitmq_conn.push_message_to_queue(exchange, routing_key, json.dumps(params))
+
+    def validate_jwt(self, payload):
+        response = SSOCoordinator().post('/verifyHeader', payload=payload,headers={'Authorization': Config.Authorization})
+        if response.status_code == 200:
+            return response.json().get('d')
+        raise InvalidAuth('Invalid auth token.')
+
+    def authenticate_user(self, jwt, nodesso):
+        jwt_token = jwt
+        nodesso_id = nodesso
+        if not jwt_token:
+            raise AuthMissing('Auth token is missing')
+        payload = {
+            'nodesso_id': nodesso_id,
+            'auth_token': jwt_token
+        }
+        self.validate_jwt(payload)
 
 class SSOCoordinator(BaseCoordinator):
 
