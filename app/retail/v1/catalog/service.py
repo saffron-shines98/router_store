@@ -55,7 +55,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        # self.authenticate_user()
+        self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -90,7 +90,6 @@ class CatalogService:
             images = self.extract_image_from_params(product_data, other_params)
             category_name = ' '.join(re.sub(r'[^\w\s]', '', product_data.get('category_name')).split())
             coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+category_name
-            print(coll_url)
             response =  {
                         "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
