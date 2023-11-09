@@ -6,8 +6,6 @@ from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
 from app.common_utils import validate_jwt
 import math
-# import urllib.parse
-# import requests
 import re
 
 
