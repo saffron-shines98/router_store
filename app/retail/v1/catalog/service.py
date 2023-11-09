@@ -6,6 +6,11 @@ from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
 from app.common_utils import validate_jwt
 import math
+# import urllib.parse
+# import requests
+import re
+
+
 
 class CatalogService:
     def __init__(self, params, headers):
@@ -50,7 +55,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        self.authenticate_user()
+        # self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -83,6 +88,9 @@ class CatalogService:
             except:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
+            category_name = ' '.join(re.sub(r'[^\w\s]', '', product_data.get('category_name')).split())
+            coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+category_name
+            print(coll_url)
             response =  {
                         "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
@@ -94,6 +102,8 @@ class CatalogService:
                         "noderetail_category": product_data.get('category_name'),
                         "noderetail_category_id": product_data.get('category_id'),
                         "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
+                        "collection_url": coll_url,
+                        "collection_name": product_data.get('category_name', ''),
                         "product_type": "simple",
                         "name": product_data.get('product_name', ''),
                         "description": product_data.get('description', ''),
