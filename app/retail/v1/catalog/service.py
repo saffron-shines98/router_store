@@ -83,6 +83,10 @@ class CatalogService:
             except:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
+            try:
+                coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+            except:
+                coll_url = ''
             response =  {
                         "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
@@ -94,6 +98,8 @@ class CatalogService:
                         "noderetail_category": product_data.get('category_name'),
                         "noderetail_category_id": product_data.get('category_id'),
                         "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
+                        "collection_url": coll_url,
+                        "collection_name": product_data.get('category_name', ''),
                         "product_type": "simple",
                         "name": product_data.get('product_name', ''),
                         "description": product_data.get('description', ''),
