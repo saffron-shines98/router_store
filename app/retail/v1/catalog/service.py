@@ -83,7 +83,10 @@ class CatalogService:
             except:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
-            coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+            try:
+                coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+            except:
+                coll_url = ''
             response =  {
                         "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
