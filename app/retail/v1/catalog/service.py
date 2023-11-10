@@ -7,8 +7,6 @@ from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
 from app.common_utils import validate_jwt
 import math
 
-
-
 class CatalogService:
     def __init__(self, params, headers):
         self.params = params
