@@ -6,7 +6,6 @@ from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
 from app.common_utils import validate_jwt
 import math
-import re
 
 
 
@@ -86,8 +85,7 @@ class CatalogService:
             except:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
-            category_name = ' '.join(re.sub(r'[^\w\s]', '', product_data.get('category_name')).split())
-            coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+category_name
+            coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
             response =  {
                         "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
                         "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
