@@ -28,3 +28,11 @@ class PriceService:
         self.coordinator.authenticate_user(jwt_token, nodesso_id)
         self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
         return {}
+
+    def bulk_update_price(self):
+        entity_id = self.generate_api_logs('bulk_price','',self.params.get('noderetail_storefront_id'))
+        jwt_token = self.headers.get('Auth-Token')
+        nodesso_id = self.headers.get('Nodesso-Id')
+        self.coordinator.authenticate_user(jwt_token, nodesso_id)
+        self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_bulk_price_update_sync_q')
+        return {}
