@@ -20,3 +20,17 @@ class PriceUpdate(MethodView):
     def post(self, params, headers, *args, **kwargs):
         response = PriceService(params, headers).update_price()
         return render_success_response(response, msg='success')
+
+class BulkPriceUpdate(MethodView):
+    param_config = {
+        'type': 'object',
+        'properties': {
+            'noderetail_storefront_id': {
+                'type': 'string'
+            }
+        }
+    }
+    @validate_params(param_config=param_config)
+    def post(self, params, headers, *args, **kwargs):
+        response = PriceService(params, headers).bulk_update_price()
+        return render_success_response(response, msg='success')
