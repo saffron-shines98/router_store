@@ -10,7 +10,7 @@ import jwt
 import base64
 import re
 from time import time
-# import pysodium as nacl
+import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
