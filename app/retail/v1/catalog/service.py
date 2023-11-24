@@ -84,7 +84,8 @@ class CatalogService:
                 other_params = dict()
             images = self.extract_image_from_params(product_data, other_params)
             try:
-                coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+                # coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+                coll_url = "https://"+ domain_details.get('primary_domain', '')+"/category/"+str(product_data.get('category_id'))
             except:
                 coll_url = ''
             response =  {
