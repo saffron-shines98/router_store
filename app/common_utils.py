@@ -10,7 +10,7 @@ import jwt
 import base64
 import re
 from time import time
-import pysodium as nacl
+# import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
@@ -133,7 +133,11 @@ def validate_jwt(payload):
     raise InvalidAuth('Invalid auth token.')
 
 def clean_string(string):
-    trimmed_string = string.strip()
-    cleaned_string = re.sub(r'\s+', ' ', trimmed_string)
-    cleaned_string = cleaned_string.replace("'", '').replace("\r", ' ').replace("\n", ' ')
-    return cleaned_string
+    if string is not None:
+        trimmed_string = string.strip()
+        cleaned_string = re.sub(r'\s+', ' ', trimmed_string)
+        cleaned_string = cleaned_string.replace("'", '').replace("\r", ' ').replace("\n", ' ')
+        return cleaned_string
+    else:
+        return None
+
