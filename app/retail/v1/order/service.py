@@ -111,14 +111,14 @@ class OrderService:
         location_payload= self.params.get('locations')
         for location in location_payload:
             gps=location.get('gps')
-            city = location.get('city')
+            city = clean_string(location.get('city', ''))
             country= location.get('country')
             area_code= location.get('area_code')
             building = clean_string(location.get('building', ''))
             is_default= location.get('is_default')
-            label = location.get('label')
+            label = clean_string(location.get('label', ''))
             locality = clean_string(location.get('locality', ''))
-            state = location.get('state')
+            state = clean_string(location.get('state', ''))
             street_name = clean_string(location.get('street_name', ''))
             type = location.get('type')
             break
