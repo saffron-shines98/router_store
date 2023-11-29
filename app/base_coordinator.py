@@ -92,5 +92,5 @@ class BaseCoordinator:
 class SSOCoordinator(BaseCoordinator):
 
     def __init__(self):
-        base_url = Config.SSO_COORDINATOR_URI
+        base_url = Config.SSO_COORDINATOR_URI_V1
         super(SSOCoordinator, self).__init__(base_url)
