@@ -50,7 +50,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        # self.authenticate_user()
+        self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
