@@ -4,7 +4,7 @@ import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
-from app.common_utils import validate_jwt
+from app.common_utils import validate_jwt, validate_jwt_though_auth1
 import math
 
 class CatalogService:
@@ -22,7 +22,7 @@ class CatalogService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        validate_jwt(payload)
+        validate_jwt_though_auth1(payload)
     
     def extract_image_url(self, image_params):
         if 'http' in image_params:
