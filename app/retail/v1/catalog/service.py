@@ -50,7 +50,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        self.authenticate_user()
+        # self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -67,8 +67,10 @@ class CatalogService:
             condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
         if self.params.get('noderetail_category_id'):
             condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
-        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
+        if (self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes'] ):
             condition_str += ''' and pisi.qty>0 '''
+        elif (self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No'] ):
+            condition_str += ''' and pisi.qty=0 '''
         if self.params.get('noderetail_agg_id'):
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
