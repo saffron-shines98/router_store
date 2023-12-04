@@ -95,7 +95,11 @@ class BaseCoordinator:
     
     def get_data_from_cache(self, key: str) -> dict:
         result = self.redis_conn.get(key)
-        return json.loads(result) if result else dict()
+        try:
+            result = json.loads(result, strict=False)
+        except:
+            result = dict()
+        return result if result else dict()
     
     def delete_data_from_cache(self, key: str):
         self.redis_conn.delete(key)
