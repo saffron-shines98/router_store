@@ -154,5 +154,4 @@ def get_hash_from_text(text):
 
 def get_hash_lookup_key(db_params, key):
     post_params_str = str(collections.OrderedDict(db_params))
-    # print(post_params_str)
     return key + get_hash_from_text(post_params_str)
