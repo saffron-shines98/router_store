@@ -11,6 +11,7 @@ class BaseCoordinator:
         self.base_url = base_url
         self.mysql_conn = Config.MYSQL_CONN
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
+        self.redis_conn = Config.REDIS_CONN
 
     def get_single_data_from_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
         column_sub_query = ','.join(column_list)
@@ -88,6 +89,16 @@ class BaseCoordinator:
             'auth_token': jwt_token
         }
         self.validate_jwt(payload)
+
+    def set_data_in_cache(self, key: str, value, ttl: int):
+        self.redis_conn.setex(key, ttl, json.dumps(value))
+    
+    def get_data_from_cache(self, key: str) -> dict:
+        result = self.redis_conn.get(key)
+        return json.loads(result) if result else dict()
+    
+    def delete_data_from_cache(self, key: str):
+        self.redis_conn.delete(key)
 
 class SSOCoordinator(BaseCoordinator):
 
