@@ -4,7 +4,7 @@ import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
-from app.common_utils import validate_jwt, validate_jwt_though_auth1,get_hash_lookup_key
+from app.common_utils import validate_jwt, validate_jwt_though_auth1
 import math
 
 class CatalogService:
@@ -50,12 +50,6 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        key_lookup= get_hash_lookup_key(self.params, 'catalog_fetch_')
-        cached_data = self.coordinator.get_data_from_cache(key_lookup)
-        if self.params.get('preview'):
-            pass
-        elif cached_data:
-            return cached_data, 'Cached Catalog Data Listed Successfully'
         self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
@@ -149,40 +143,4 @@ class CatalogService:
             other_params = {key: value for key, value in other_params.items() if key not in keys_to_be_removed}
             response.get('attributes').update(other_params)
             items.append(response)
-        self.coordinator.set_data_in_cache(key_lookup, {'items':items}, 3600*12)
-        return {'items':items}, 'success'
-    
-    def fetch_catalog_count(self):
-        key_lookup= get_hash_lookup_key(self.params, 'catalog_count_')
-        cached_data = self.coordinator.get_data_from_cache(key_lookup)
-        if self.params.get('preview'):
-            pass
-        elif cached_data:
-            return cached_data, 'Cached Catalog Count Data Fetch Successfully'
-        self.authenticate_user()
-        plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
-                                                                   [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
-        instance_details = plotch_instance.get('instance_details')
-        try: 
-            catalog = json.loads(instance_details).get('catalog')
-        except :
-            catalog = ""
-        crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
-        catalog_id = crs_catalog.get('catalog_id')
-        condition_str = ''
-        if self.params.get('noderetail_provider_id'):
-            condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
-        if self.params.get('noderetail_category'):
-            condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
-        if self.params.get('noderetail_category_id'):
-            condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
-        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
-            condition_str += ''' and pisi.qty>0 '''
-        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
-            condition_str += ''' and pisi.qty=0 '''
-        if self.params.get('noderetail_agg_id'):
-            retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
-            if retail_user_instance_data:
-                condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
-        joined_result = self.coordinator.fetch_catalog_data_count(catalog_id, condition_str)
-        return {'count':joined_result.get('product_count', 0)}, 'Catalog Count Data Fetch Successfully'
+        return {'items':items}
