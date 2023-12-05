@@ -9,6 +9,8 @@ from cryptography.hazmat.backends import default_backend
 import jwt
 import base64
 import re
+import hashlib
+import collections
 from time import time
 import pysodium as nacl
 from hashlib import blake2b
@@ -32,7 +34,7 @@ def render_success_response(response, msg='', status=1) -> Response:
 
 def render_success_response_with_body(response, msg='', status=1) -> Response:
     body = {
-        'api_action_status': 'success'
+        'api_action_status': msg if msg else 'success'
     }
     if response:
         body.update(response)
@@ -147,3 +149,9 @@ def clean_string(string):
     else:
         return None
 
+def get_hash_from_text(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+def get_hash_lookup_key(db_params, key):
+    post_params_str = str(collections.OrderedDict(db_params))
+    return key + get_hash_from_text(post_params_str)
