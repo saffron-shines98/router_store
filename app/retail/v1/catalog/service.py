@@ -51,14 +51,12 @@ class CatalogService:
 
     def fetch_catalog(self):
         key_lookup= get_hash_lookup_key(self.params, 'catalog_fetch_')
-        # print(key_lookup)
         cached_data = self.coordinator.get_data_from_cache(key_lookup)
-        # print(cached_data)
         if self.params.get('preview'):
             pass
         elif cached_data:
             return cached_data, 'Cached Catalog Data Listed Successfully'
-        # self.authenticate_user()
+        self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
