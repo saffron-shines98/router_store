@@ -13,6 +13,6 @@ class FetchCatalog(MethodView):
     }
     @validate_params(param_config=param_config)
     def post(self, params, headers, *args, **kwargs):
-        response = CatalogService(params, headers).fetch_catalog()
-        return render_success_response_with_body(response, msg='success')
+        response, msg = CatalogService(params, headers).fetch_catalog()
+        return render_success_response_with_body(response, msg=msg)
     
