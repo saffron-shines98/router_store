@@ -21,6 +21,7 @@ class BaseCoordinator:
                 for data in condition_params])
         order_by_query = ' order by {} {} '.format(order_by_column, order_by)
         query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
+        print(query, tuple([data.get('val') for data in condition_params]))
         return self.mysql_conn.query_db_one(query, tuple([data.get('val') for data in condition_params]))
 
     def get_multiple_data_from_db(self, table_name: str, condition_params: list, column_list='*',  order_by_column=1, order_by='ASC') -> list:
@@ -100,10 +101,9 @@ class BaseCoordinator:
         query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
         return self.mysql_conn_node_sso.query_db_one_node_sso(query, tuple([data.get('val') for data in condition_params]))
     
-    def get_parsed_data_from_es(self, es_query: dict, index: str, doctype='products') -> list:
+    def get_parsed_data_from_es(self, es_query: dict, index: str, fields: list, doctype='products') -> list:
         es_utility = ESUtility(self.es_conn, index.lower(), doctype)
-        print(es_utility)
-        return es_utility.get_parsed_es_result_set(es_query)
+        return es_utility.get_parsed_es_result_set(es_query, fields)
 
     def get_complete_data_from_es(self, es_query: dict, index: str, doctype=None) -> dict:
         if not es_query.get('query') and not es_query.get('suggest'):

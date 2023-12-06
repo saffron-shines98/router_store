@@ -249,8 +249,11 @@ class ESUtility:
         return response_data
 
     def get_parsed_es_result_set(self, es_query, fields=None) -> list:
+        print('===========')
+        print(fields)
         if fields:
             es_query.update({'_source': fields})
+        print(es_query)
         return self._get_parsed_query_data(es_query)
 
     def get_document_from_es(self, query) -> dict:
