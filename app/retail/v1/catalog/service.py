@@ -4,14 +4,16 @@ import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
-from app.common_utils import validate_jwt, validate_jwt_though_auth1
+from app.common_utils import validate_jwt, validate_jwt_though_auth1,header_verification_node_sso
 import math
+from app.es_query_builder import ESQueryBuilder
 
 class CatalogService:
     def __init__(self, params, headers):
         self.params = params
         self.headers = headers
         self.coordinator = CatalogCoordinator()
+        self.es_query_builder = ESQueryBuilder()
     
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -22,7 +24,8 @@ class CatalogService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        validate_jwt_though_auth1(payload)
+        # validate_jwt_though_auth1(payload)
+        header_verification_node_sso(payload)
     
     def extract_image_url(self, image_params):
         if 'http' in image_params:
@@ -50,12 +53,13 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        self.authenticate_user()
+        # self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
+            instance_details = json.loads(instance_details)
         except :
             catalog = ""
         crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
@@ -78,8 +82,12 @@ class CatalogService:
         noderetail_catalog_id = ''
         if catalog_id and self.params.get('noderetail_catalog_id'):
             noderetail_catalog_id = catalog_id
-        joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
+        # joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
+        joined_result = list()
         items = []
+        final_feed_query = self.get_catalog_fetch_query(instance_details.get('inventory'))
+        print(final_feed_query)
+        data = self.coordinator.get_parsed_data_from_es(final_feed_query,'plotch_products_' + catalog_id)
         domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
             try:
@@ -143,4 +151,40 @@ class CatalogService:
             other_params = {key: value for key, value in other_params.items() if key not in keys_to_be_removed}
             response.get('attributes').update(other_params)
             items.append(response)
-        return {'items':items}
+        return {'items':data}
+    
+
+
+    def get_catalog_fetch_query(self, inventory_id):
+        es_query = ESQueryBuilder()
+
+        if self.params.get('noderetail_provider_id'):
+            es_query.must(ESQueryBuilder.term_query("seller_id.keyword", self.params.get('noderetail_provider_id')))
+            # condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
+        if self.params.get('noderetail_category'):
+            es_query.must(ESQueryBuilder.term_query("category_name.keyword", self.params.get('noderetail_category')))
+            # condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
+        if self.params.get('noderetail_category_id'):
+            es_query.must(ESQueryBuilder.term_query("category_id.keyword", self.params.get('noderetail_category_id')))
+            # condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
+        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
+            es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'gt': 0}))
+            # condition_str += ''' and pisi.qty>0 '''
+        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
+            es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'lt': 0}))
+            # es_query.must(ESQueryBuilder.term_query("seller_id.keyword", self.params.get('noderetail_provider_id')))
+            # condition_str += ''' and pisi.qty=0 '''
+
+
+        # if params.get('vendorId'):
+        #     es_query.must(ESQueryBuilder.term_query("vendor_id.keyword", params.get('vendorId')))
+        # elif params.get('sellerId'):
+        #     es_query.must(ESQueryBuilder.term_query("seller_id.keyword", params.get('sellerId')))
+        # if params.get('filters'):
+        #     self._get_request_filter_bool_query(params.get('filters'), es_query, params.get('marketplaceInstanceId'))
+        # if not self._is_show_oos_enabled(params.get('themeInstanceId')):
+        #     self._add_instock_to_query(es_query, inventory_id=params.get('inventoryInstanceId'))
+        final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
+        #### self.params.get('page_size'), self.params.get('page_number')
+        final_feed_query.update({'size': self.params.get('page_size', 48), 'sort': {'created_at': {'order': 'desc'}}, 'from': (self.params.get('page_number', 1) - 1) * int(self.params.get('page_size', 48)), 'collapse': {'field': 'variant_group_id'}})
+        return final_feed_query
