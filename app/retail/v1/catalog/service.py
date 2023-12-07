@@ -59,9 +59,10 @@ class CatalogService:
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
-            instance_details = json.loads(instance_details)
+            instance_details = json.loads(instance_details, strict=False)
         except :
             catalog = ""
+            instance_details = dict()
         crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
         catalog_id = crs_catalog.get('catalog_id')
         noderetail_catalog_id = ''
@@ -113,7 +114,7 @@ class CatalogService:
                             "discounted_price":  str(product_data.get('discounted_price', '')),
                         },
                         "provider_info": {
-                            "store_name": product_data.get('vendor_name') or other_params.get('vendor_name', ''),
+                            "store_name": product_data.get('vendor_name'),
                             "brand_logo": "",
                             "long_desc": product_data.get('long_desc', ''),
                             "short_desc": product_data.get('short_desc', ''),
@@ -128,7 +129,8 @@ class CatalogService:
                 "short_desc", "city_code", "product_hash", "ntags", "days", "bpp_id", "pickup_pincodes", 
                 "blocked_products_details", "inventory_details", "cancel_details", "attr_tags", "hide_return",
                 "return_product_detail_base_on_rule","dispatch_details","attached_pages", "return_details", "delivery_details",
-                "pricing_details"]
+                "pricing_details", 
+                "ondc_item_id", "origin_sp", "return_window"]
             other_params = {key: value for key, value in product_data.items() if key not in keys_to_be_removed}
             response.get('attributes').update(other_params)
             items.append(response)
