@@ -70,6 +70,7 @@ class CatalogService:
             noderetail_catalog_id = catalog_id
         items = []
         final_catalog_fetch_query = self.get_catalog_fetch_query(instance_details.get('inventory'))
+        print(final_catalog_fetch_query)
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
         domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
@@ -141,11 +142,11 @@ class CatalogService:
     def get_catalog_fetch_query(self, inventory_id):
         es_query = ESQueryBuilder()
         if self.params.get('noderetail_provider_id'):
-            es_query.must(ESQueryBuilder.term_query("seller_id.keyword", self.params.get('noderetail_provider_id')))
+            es_query.must(ESQueryBuilder.term_query("seller_id", self.params.get('noderetail_provider_id')))
         if self.params.get('noderetail_category'):
-            es_query.must(ESQueryBuilder.term_query("category_name.keyword", self.params.get('noderetail_category')))
+            es_query.must(ESQueryBuilder.term_query("category_name", self.params.get('noderetail_category')))
         if self.params.get('noderetail_category_id'):
-            es_query.must(ESQueryBuilder.term_query("category_id.keyword", self.params.get('noderetail_category_id')))
+            es_query.must(ESQueryBuilder.term_query("category_id", self.params.get('noderetail_category_id')))        
         if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes'] and inventory_id:
             es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'gt': 0}))
         elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No'] and inventory_id:
@@ -153,7 +154,7 @@ class CatalogService:
         if self.params.get('noderetail_agg_id'):
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
-                es_query.must(ESQueryBuilder.term_query("vendor_id.keyword", retail_user_instance_data.get('vendor_id', '')))
+                es_query.must(ESQueryBuilder.term_query("vendor_id", retail_user_instance_data.get('vendor_id', '')))
         final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
         final_feed_query.update({'size': self.params.get('page_size', 48), 'sort': {'created_at': {'order': 'desc'}}, 'from': (self.params.get('page_number', 1) - 1) * int(self.params.get('page_size', 48)), 'collapse': {'field': 'variant_group_id'}})
         return final_feed_query
