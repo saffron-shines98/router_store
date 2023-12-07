@@ -3,7 +3,6 @@ from datetime import datetime
 import mysql.connector as MySQLdb
 import redis
 import pika
-from elasticsearch import Elasticsearch, RequestsHttpConnection
 
 
 class SqlConnection(object):

@@ -2,7 +2,6 @@ import json
 import requests
 from config import Config
 from flask import Response
-from app.connections import ESUtility
 from app.exceptions import InvalidAuth, AuthMissing
 
 
@@ -100,7 +99,7 @@ class BaseCoordinator:
         query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
         return self.mysql_conn_node_sso.query_db_one_node_sso(query, tuple([data.get('val') for data in condition_params]))
     
-    
+
 class SSOCoordinator(BaseCoordinator):
 
     def __init__(self):
