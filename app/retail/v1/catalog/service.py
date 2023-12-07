@@ -91,7 +91,7 @@ class CatalogService:
                         "noderetail_category_id": product_data.get('category_id'),
                         "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "collection_url": coll_url,
-                        "collection_name": product_data.get('category_name', product_data.get('ondc_category_id', '')),
+                        "collection_name": product_data.get('category_name', ''),
                         "product_type": "simple",
                         "name": product_data.get('product_name', ''),
                         "description": product_data.get('description', ''),

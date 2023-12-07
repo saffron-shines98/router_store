@@ -15,3 +15,4 @@ class CatalogCoordinator(BaseCoordinator):
                     where cp.catalog_id='{}' {} 
                     order by id desc limit {} offset {}""".format(catalog_id, condition_str, limit, int(limit)*(int(current_page)-1))
         return self.mysql_conn.query_db(query=query)
+
