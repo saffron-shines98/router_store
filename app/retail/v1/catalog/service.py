@@ -53,7 +53,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        # self.authenticate_user()
+        self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -64,25 +64,9 @@ class CatalogService:
             catalog = ""
         crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
         catalog_id = crs_catalog.get('catalog_id')
-        condition_str = ''
-        if self.params.get('noderetail_provider_id'):
-            condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
-        if self.params.get('noderetail_category'):
-            condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
-        if self.params.get('noderetail_category_id'):
-            condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
-        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
-            condition_str += ''' and pisi.qty>0 '''
-        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
-            condition_str += ''' and pisi.qty=0 '''
-        if self.params.get('noderetail_agg_id'):
-            retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
-            if retail_user_instance_data:
-                condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
         noderetail_catalog_id = ''
         if catalog_id and self.params.get('noderetail_catalog_id'):
             noderetail_catalog_id = catalog_id
-        # joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
         items = []
         final_catalog_fetch_query = self.get_catalog_fetch_query(instance_details.get('inventory'))
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
@@ -106,7 +90,7 @@ class CatalogService:
                         "noderetail_storefront_id": self.params.get('noderetail_storefront_id', ''),
                         "noderetail_item_id": str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "noderetail_provider_id":  product_data.get('seller_id', '') or product_data.get('vendor_id'),
-                        "noderetail_category": product_data.get('category_name', product_data.get('ondc_category_id', '')),
+                        "noderetail_category": product_data.get('category_name', ''),
                         "noderetail_category_id": product_data.get('category_id'),
                         "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
                         "collection_url": coll_url,
@@ -157,11 +141,11 @@ class CatalogService:
     def get_catalog_fetch_query(self, inventory_id):
         es_query = ESQueryBuilder()
         if self.params.get('noderetail_provider_id'):
-            es_query.must(ESQueryBuilder.term_query("seller_id.keyword", self.params.get('noderetail_provider_id')))
+            es_query.must(ESQueryBuilder.term_query("seller_id", self.params.get('noderetail_provider_id')))
         if self.params.get('noderetail_category'):
-            es_query.must(ESQueryBuilder.term_query("category_name.keyword", self.params.get('noderetail_category')))
+            es_query.must(ESQueryBuilder.term_query("category_name", self.params.get('noderetail_category')))
         if self.params.get('noderetail_category_id'):
-            es_query.must(ESQueryBuilder.term_query("category_id.keyword", self.params.get('noderetail_category_id')))
+            es_query.must(ESQueryBuilder.term_query("category_id", self.params.get('noderetail_category_id')))
         if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
             es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'gt': 0}))
         elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
@@ -169,8 +153,7 @@ class CatalogService:
         if self.params.get('noderetail_agg_id'):
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
-                # condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
-                es_query.must(ESQueryBuilder.term_query("vendor_id.keyword", retail_user_instance_data.get('vendor_id', '')))
+                es_query.must(ESQueryBuilder.term_query("vendor_id", retail_user_instance_data.get('vendor_id', '')))
         es_query.required_fields(["product_name", "category_id", "category_name"])
         final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
         final_feed_query.update({'size': self.params.get('page_size', 48), 'sort': {'created_at': {'order': 'desc'}}, 'from': (self.params.get('page_number', 1) - 1) * int(self.params.get('page_size', 48)), 'collapse': {'field': 'variant_group_id'}})

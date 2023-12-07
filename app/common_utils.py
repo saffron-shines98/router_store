@@ -151,7 +151,7 @@ def header_verification_node_sso(headers):
     nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
     public_key = nodesso_details.get('public_key')
     if not public_key:
-        raise Exception('Public key not found')
+        raise InvalidAuth('Public key not found')
     public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
     public_key = public_key_start + public_key if not public_key.strip().startswith(public_key_start) else public_key
     public_key = public_key + public_key_end if not public_key.strip().endswith(public_key_end) else public_key
@@ -161,6 +161,5 @@ def header_verification_node_sso(headers):
     if nodesso_details.get('challenge_string') == challenge_string:
         channel_id = challenge_string.split('.')[1]
         return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
-    # raise Exception('Not Verified')
     raise InvalidAuth('Invalid auth token.')
 

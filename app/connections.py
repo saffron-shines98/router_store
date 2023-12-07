@@ -123,6 +123,7 @@ class SqlConnectionNodeSso(object):
 
     def __init__(self, db_config):
         self.db_config_node_sso = db_config
+        print(self.db_config_node_sso)
         try:
             self.connection_node_sso = MySQLdb.connect(**self.db_config_node_sso)
             self.cursor_node_sso = self.connection_node_sso.cursor(dictionary=True, buffered=True)
@@ -227,7 +228,6 @@ class ESUtility:
 
     def get_total_rows_count(self, es_query):
         es_count = self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query)
-        print(es_count)
         return self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query) 
     
     def _get_parsed_query_data(self, query) -> list:
@@ -249,11 +249,8 @@ class ESUtility:
         return response_data
 
     def get_parsed_es_result_set(self, es_query, fields=None) -> list:
-        print('===========')
-        print(fields)
         if fields:
             es_query.update({'_source': fields})
-        print(es_query)
         return self._get_parsed_query_data(es_query)
 
     def get_document_from_es(self, query) -> dict:
