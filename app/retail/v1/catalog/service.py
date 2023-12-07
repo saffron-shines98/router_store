@@ -22,7 +22,6 @@ class CatalogService:
             'nodesso_id': nodesso_id,
             'auth_token': jwt_token
         }
-        # validate_jwt_though_auth1(payload)
         header_verification_node_sso(payload)
     
     def extract_image_url(self, image_params):
