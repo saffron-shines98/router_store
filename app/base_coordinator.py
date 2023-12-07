@@ -2,6 +2,7 @@ import json
 import requests
 from config import Config
 from flask import Response
+from app.connections import ESUtility
 from app.exceptions import InvalidAuth, AuthMissing
 
 
@@ -11,6 +12,8 @@ class BaseCoordinator:
         self.base_url = base_url
         self.mysql_conn = Config.MYSQL_CONN
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
+        self.mysql_conn_node_sso = Config.MYSQL_CONN_NODE_SSO
+        self.es_conn = Config.ES_CONN
 
     def get_single_data_from_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
         column_sub_query = ','.join(column_list)
@@ -89,6 +92,15 @@ class BaseCoordinator:
         }
         self.validate_jwt(payload)
 
+    def get_single_data_from_node_sso_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
+        column_sub_query = ','.join(column_list)
+        where_sub_query = ' and '.join(['{} {} %s'.format(data.get('col'), data.get('operator') or '=')
+                for data in condition_params])
+        order_by_query = ' order by {} {} '.format(order_by_column, order_by)
+        query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
+        return self.mysql_conn_node_sso.query_db_one_node_sso(query, tuple([data.get('val') for data in condition_params]))
+    
+    
 class SSOCoordinator(BaseCoordinator):
 
     def __init__(self):
