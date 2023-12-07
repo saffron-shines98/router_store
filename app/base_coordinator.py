@@ -12,7 +12,6 @@ class BaseCoordinator:
         self.mysql_conn = Config.MYSQL_CONN
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
         self.mysql_conn_node_sso = Config.MYSQL_CONN_NODE_SSO
-        self.es_conn = Config.ES_CONN
 
     def get_single_data_from_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
         column_sub_query = ','.join(column_list)
