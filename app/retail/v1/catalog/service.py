@@ -51,7 +51,7 @@ class CatalogService:
             main_image = product_data.get('image4') or other_params.get('image4')
             image_list.append(self.extract_image_url(main_image))
         return image_list
-    
+
     def fetch_catalog(self):
         self.authenticate_user()
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
@@ -154,7 +154,6 @@ class CatalogService:
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
                 es_query.must(ESQueryBuilder.term_query("vendor_id.keyword", retail_user_instance_data.get('vendor_id', '')))
-        es_query.required_fields(["product_name", "category_id", "category_name"])
         final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
         final_feed_query.update({'size': self.params.get('page_size', 48), 'sort': {'created_at': {'order': 'desc'}}, 'from': (self.params.get('page_number', 1) - 1) * int(self.params.get('page_size', 48)), 'collapse': {'field': 'variant_group_id'}})
         return final_feed_query
