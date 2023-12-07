@@ -70,7 +70,6 @@ class CatalogService:
             noderetail_catalog_id = catalog_id
         items = []
         final_catalog_fetch_query = self.get_catalog_fetch_query(instance_details.get('inventory'))
-        print(final_catalog_fetch_query)
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
         domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
