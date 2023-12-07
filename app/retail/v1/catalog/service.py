@@ -72,11 +72,7 @@ class CatalogService:
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
         domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
-            try:
-                other_params = json.loads(product_data.get('other_params'), strict=False)
-            except:
-                other_params = dict()
-            images = self.extract_image_from_params(product_data, other_params)
+            images = self.extract_image_from_params(product_data, {})
             try:
                 # coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
                 coll_url = "https://"+ domain_details.get('primary_domain', '')+"/category/"+str(product_data.get('category_id'))
@@ -119,8 +115,8 @@ class CatalogService:
                         "provider_info": {
                             "store_name": product_data.get('vendor_name') or other_params.get('vendor_name', ''),
                             "brand_logo": "",
-                            "long_desc": other_params.get('long_desc', ''),
-                            "short_desc": other_params.get('short_desc', ''),
+                            "long_desc": product_data.get('long_desc', ''),
+                            "short_desc": product_data.get('short_desc', ''),
                             "store_images": [],
                             "fssai_license_num": product_data.get('fssai_number', ''),
                             "serviceability": [],
@@ -146,9 +142,9 @@ class CatalogService:
             es_query.must(ESQueryBuilder.term_query("category_name", self.params.get('noderetail_category')))
         if self.params.get('noderetail_category_id'):
             es_query.must(ESQueryBuilder.term_query("category_id", self.params.get('noderetail_category_id')))
-        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
+        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes'] and inventory_id:
             es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'gt': 0}))
-        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
+        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No'] and inventory_id:
             es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'lte': 0}))
         if self.params.get('noderetail_agg_id'):
             retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
