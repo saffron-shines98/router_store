@@ -130,7 +130,8 @@ class CatalogService:
                 "blocked_products_details", "inventory_details", "cancel_details", "attr_tags", "hide_return",
                 "return_product_detail_base_on_rule","dispatch_details","attached_pages", "return_details", "delivery_details",
                 "pricing_details", 
-                "ondc_item_id", "origin_sp", "return_window"]
+                "ondc_item_id", "origin_sp", "return_window", "mrp", "sales_price", "origin_mrp","marketplace_mrp", "marketplace_sp", 
+                "category_id", "product_id", "description", "discount_price", "variant_group_id", "discount"]
             other_params = {key: value for key, value in product_data.items() if key not in keys_to_be_removed}
             response.get('attributes').update(other_params)
             items.append(response)
