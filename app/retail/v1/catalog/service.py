@@ -245,3 +245,23 @@ class CatalogService:
         final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
         final_feed_query.update({'size': self.params.get('page_size', 48), 'sort': {'created_at': {'order': 'desc'}}, 'from': (self.params.get('page_number', 1) - 1) * int(self.params.get('page_size', 48)), 'collapse': {'field': 'variant_group_id'}})
         return final_feed_query
+
+    def fetch_catalog_count(self):
+        self.authenticate_user()
+        plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
+                                                                   [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+        instance_details = plotch_instance.get('instance_details')
+        try: 
+            catalog = json.loads(instance_details).get('catalog')
+            instance_details = json.loads(instance_details, strict=False)
+        except :
+            catalog = ""
+            instance_details = dict()
+        crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+        catalog_id = crs_catalog.get('catalog_id')
+        final_catalog_fetch_query = self.get_catalog_fetch_query(instance_details.get('inventory'))        
+        total_product_es_query = ESQueryBuilder.get_distinct_product_count_query(final_catalog_fetch_query)
+        joined_result = self.coordinator.get_document_count_from_es(total_product_es_query, 'plotch_products_' + catalog_id)
+        catalog_count_data =joined_result.get('aggregations', {}).get('type_count', {}).get('value', 0)
+        return {'catalog_count_data': catalog_count_data}
+    
