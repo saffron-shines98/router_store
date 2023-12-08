@@ -32,7 +32,7 @@ def render_success_response(response, msg='', status=1) -> Response:
 
 def render_success_response_with_body(response, msg='', status=1) -> Response:
     body = {
-        'api_action_status': 'success'
+        'api_action_status': msg if msg else 'success'
     }
     if response:
         body.update(response)

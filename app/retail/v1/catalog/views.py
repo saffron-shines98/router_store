@@ -17,7 +17,7 @@ class FetchCatalog(MethodView):
         return render_success_response_with_body(response, msg='success')
     
 
-class FetchCatalogV1(MethodView):
+class FetchCatalogFromEs(MethodView):
     param_config = {
         'type': 'object',
         'properties': {
@@ -28,4 +28,4 @@ class FetchCatalogV1(MethodView):
     @validate_params(param_config=param_config)
     def post(self, params, headers, *args, **kwargs):
         response = CatalogService(params, headers).fetch_catalog_from_es()
-        return render_success_response_with_body(response, msg='success')
+        return render_success_response_with_body(response, msg='Fetch Catalog Data Successfully')

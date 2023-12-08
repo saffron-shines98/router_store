@@ -30,7 +30,7 @@ v1.add_url_rule(inventory_prefix + '/update', view_func=inventory_view.Inventory
 
 catalog_prefix = '/catalog'
 v1.add_url_rule(catalog_prefix + '/fetch', view_func=catalog_view.FetchCatalog.as_view('catalog_fetch'))
-v1.add_url_rule(catalog_prefix + '/fetchV1', view_func=catalog_view.FetchCatalog.as_view('catalog_fetch_v1'))
+v1.add_url_rule(catalog_prefix + '/fetchV1', view_func=catalog_view.FetchCatalogFromEs.as_view('catalog_fetch_v1'))
 
 price_prefix = '/price'
 v1.add_url_rule(price_prefix + '/update', view_func=price_view.PriceUpdate.as_view('price_updates'))
