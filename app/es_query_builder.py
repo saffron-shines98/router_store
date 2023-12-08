@@ -197,3 +197,8 @@ class ESQueryBuilder:
     def _add_instock_to_query(bool_query, inventory_id=None):
         if inventory_id:
             bool_query.must(ESQueryBuilder.range_query('inventory_details.{}'.format(inventory_id), range_doc={'gt': 0}))
+        
+    @staticmethod
+    def get_distinct_product_count_query(main_query):
+        main_query.update(ESQueryBuilder.distinct_field_count_query('variant_group_id'))
+        return main_query

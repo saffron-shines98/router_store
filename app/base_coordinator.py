@@ -4,6 +4,7 @@ from config import Config
 from flask import Response
 from app.connections import ESUtility
 from app.exceptions import InvalidAuth, AuthMissing
+from app.es_query_builder import ESQueryBuilder
 
 
 class BaseCoordinator:
@@ -14,6 +15,7 @@ class BaseCoordinator:
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
         self.mysql_conn_node_sso = Config.MYSQL_CONN_NODE_SSO
         self.es_conn = Config.ES_CONN
+        self.es_query_builder = ESQueryBuilder()
 
     def get_single_data_from_db(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
         column_sub_query = ','.join(column_list)
@@ -121,6 +123,11 @@ class BaseCoordinator:
         list(map(lambda item: es_query.pop(item, None), ['from', 'collapse', 'sort']))
         es_utility = ESUtility(self.es_conn, index.lower(), 'products')
         return es_utility.get_complete_es_result_set(es_query)
+    
+    def _get_data_by_scrolling_fetch(self, query, index) -> list:
+        es_utility = ESUtility(self.es_conn, index.lower(), 'products')
+        return es_utility._get_data_by_scrolling(query)
+
 
 class SSOCoordinator(BaseCoordinator):
 
