@@ -123,7 +123,6 @@ class SqlConnectionNodeSso(object):
 
     def __init__(self, db_config):
         self.db_config_node_sso = db_config
-        print(self.db_config_node_sso)
         try:
             self.connection_node_sso = MySQLdb.connect(**self.db_config_node_sso)
             self.cursor_node_sso = self.connection_node_sso.cursor(dictionary=True, buffered=True)
