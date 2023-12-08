@@ -66,7 +66,8 @@ class OrderService:
             "status_created_time": converted_date_time,
             "remark": self.params.get('remark'),
             "created_at":get_current_datetime(),
-            "parent_id": entity
+            "parent_id": entity,
+            "storefront_id": self.params.get('noderetail_storefront_id')
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
         self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
