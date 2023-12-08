@@ -3,6 +3,7 @@ from datetime import datetime
 import mysql.connector as MySQLdb
 import redis
 import pika
+from elasticsearch import Elasticsearch, RequestsHttpConnection
 
 
 class SqlConnection(object):
@@ -122,6 +123,7 @@ class SqlConnectionNodeSso(object):
 
     def __init__(self, db_config):
         self.db_config_node_sso = db_config
+
         try:
             self.connection_node_sso = MySQLdb.connect(**self.db_config_node_sso)
             self.cursor_node_sso = self.connection_node_sso.cursor(dictionary=True, buffered=True)
@@ -197,3 +199,65 @@ class SqlConnectionNodeSso(object):
     def __del__(self):
         self.cursor_node_sso.close()
         self.connection_node_sso.close()
+
+
+class ModifiedESConnection:
+
+    def __init__(self, es_host, es_port):
+        self.es_host = es_host
+        self.es_port = es_port
+
+    def get_es_handle(self):
+        es_client = Elasticsearch(
+            hosts=[{'host': self.es_host, 'port': self.es_port}],
+            timeout=30,
+            connection_class=RequestsHttpConnection)
+        return es_client
+
+
+class ESUtility:
+
+    def __init__(self, es_handle, index, doctype):
+        self.es_handle = es_handle
+        self.es_index = index
+        self.es_doctype = doctype
+
+    @staticmethod
+    def _get_parsed_es_data(es_data) -> list:
+        return list(map(lambda data: data.get('_source', {}), es_data.get('hits', {}).get('hits', [])))
+
+    def get_total_rows_count(self, es_query):
+        es_count = self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query)
+        return self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query) 
+    
+    def _get_parsed_query_data(self, query) -> list:
+        es_data = self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, body=query)
+        return self._get_parsed_es_data(es_data)
+
+    def _get_data_by_scrolling(self, query) -> list:
+        response_data = list()
+        es_data = self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, scroll='2m', size=1000, body=query)
+        sid = es_data['_scroll_id']
+        scroll_size = es_data['hits']['total']
+        response_data.extend(self._get_parsed_es_data(es_data))
+        while scroll_size > 0:
+            page = self.es_handle.scroll(scroll_id=sid, scroll='2m')
+            sid = page['_scroll_id']
+            scroll_size = len(page['hits']['hits'])
+            parsed_es_data = self._get_parsed_es_data(page)
+            response_data.extend(parsed_es_data)
+        return response_data
+
+    def get_parsed_es_result_set(self, es_query, fields=None) -> list:
+        if fields:
+            es_query.update({'_source': fields})
+        return self._get_parsed_query_data(es_query)
+
+    def get_document_from_es(self, query) -> dict:
+        response_data = self._get_parsed_query_data(query)
+        return dict(response_data[0]) if response_data else dict()
+
+    def get_complete_es_result_set(self, query, fields=None) -> dict:
+        if fields:
+            query.update({'_source': fields})
+        return self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, body=query)
