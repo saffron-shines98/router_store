@@ -38,5 +38,5 @@ class InventoryService:
     def update_inventory(self):
         self.generate_api_logs('inventory', self.params.get('item_id'), self.params.get('storefront_instance_id'))
         self.authenticate_user()
-        self.coordinator.push_data_in_queue(self.params, 'plotch_snapdeal_inventory_sync_q')
+        self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
         return {}
