@@ -59,6 +59,102 @@ class CatalogService:
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
+        except :
+            catalog = ""
+        crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+        catalog_id = crs_catalog.get('catalog_id')
+        condition_str = ''
+        if self.params.get('noderetail_provider_id'):
+            condition_str += ''' and cp.seller_id = "{}" '''.format(self.params.get('noderetail_provider_id'))
+        if self.params.get('noderetail_category'):
+            condition_str += ''' and cp.category_name = "{}" '''.format(self.params.get('noderetail_category'))
+        if self.params.get('noderetail_category_id'):
+            condition_str += ''' and cp.category_id = {} '''.format(self.params.get('noderetail_category_id'))
+        if self.params.get('inventory_info', {}).get('is_in_stock','') in [1, '1', True, 'true', 'yes', 'Yes']:
+            condition_str += ''' and pisi.qty>0 '''
+        elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
+            condition_str += ''' and pisi.qty=0 '''
+        if self.params.get('noderetail_agg_id'):
+            retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
+            if retail_user_instance_data:
+                condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
+        noderetail_catalog_id = ''
+        if catalog_id and self.params.get('noderetail_catalog_id'):
+            noderetail_catalog_id = catalog_id
+        joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
+        items = []
+        domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
+        for product_data in joined_result:
+            try:
+                other_params = json.loads(product_data.get('other_params'), strict=False)
+            except:
+                other_params = dict()
+            images = self.extract_image_from_params(product_data, other_params)
+            try:
+                # coll_url = "https://"+ domain_details.get('primary_domain', '')+"/products-near-me?category="+product_data.get('category_name')
+                coll_url = "https://"+ domain_details.get('primary_domain', '')+"/category/"+str(product_data.get('category_id'))
+            except:
+                coll_url = ''
+            response =  {
+                        "item_id": product_data.get('alternate_product_id', '') or product_data.get('ondc_item_id', ''),
+                        "provider_id": product_data.get('seller_id', '') or product_data.get('vendor_id'),
+                        "noderetail_account_user_id": self.params.get('noderetail_account_user_id', ''),
+                        "noderetail_catalog_id": noderetail_catalog_id,
+                        "noderetail_storefront_id": self.params.get('noderetail_storefront_id', ''),
+                        "noderetail_item_id": str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
+                        "noderetail_provider_id":  product_data.get('seller_id', '') or product_data.get('vendor_id'),
+                        "noderetail_category": product_data.get('category_name'),
+                        "noderetail_category_id": product_data.get('category_id'),
+                        "noderetail_product_url": "https://"+ domain_details.get('primary_domain', '')+ "/product/s/" + str(int(product_data.get('product_id', ''))) if product_data.get('product_id', '') else '',
+                        "collection_url": coll_url,
+                        "collection_name": product_data.get('category_name', ''),
+                        "product_type": "simple",
+                        "name": product_data.get('product_name', ''),
+                        "description": product_data.get('description', ''),
+                        "short_description": "",
+                        "category": product_data.get('category_name', ''),
+                        "variant_group_id": product_data.get('variant_group_id', ''),
+                        "variant": product_data.get('variant',''),
+                        "location_id": [],
+                        "inventory_info": {
+                            "qty": str(product_data.get('inventory_qty')),
+                            "min_qty": "",
+                            "max_qty": "",
+                            "is_in_stock": "1"
+                        },
+                        "pricing_info": {
+                            "mrp":  str(product_data.get('mrp', '')),
+                            "sale_price":  str(product_data.get('sales_price', '')),
+                            "discount_start_date": str(product_data.get('discount_start_date', '')),
+                            "discount_end_date":  str(product_data.get('discount_end_date', '')),
+                            "discounted_price":  str(product_data.get('discounted_price', '')),
+                        },
+                        "provider_info": {
+                            "store_name": product_data.get('vendor_name') or other_params.get('vendor_name', ''),
+                            "brand_logo": "",
+                            "long_desc": other_params.get('long_desc', ''),
+                            "short_desc": other_params.get('short_desc', ''),
+                            "store_images": [],
+                            "fssai_license_num": product_data.get('fssai_number', ''),
+                            "serviceability": [],
+                            "locations": []
+                            },
+                        "images": images,
+                        "attributes": {}}
+            keys_to_be_removed = ["provider_id", "circle_radius", "bpp_uri", "locations", "long_desc", "storefront_timing", 
+                                  "short_desc", "city_code", "product_hash", "ntags", "days", "bpp_id"]
+            other_params = {key: value for key, value in other_params.items() if key not in Config.KEYS_TO_BE_REMOVED}
+            response.get('attributes').update(other_params)
+            items.append(response)
+        return {'items':items}
+    
+    def fetch_catalog_from_es(self):
+        self.authenticate_user()
+        plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
+                                                                   [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+        instance_details = plotch_instance.get('instance_details')
+        try: 
+            catalog = json.loads(instance_details).get('catalog')
             instance_details = json.loads(instance_details, strict=False)
         except :
             catalog = ""
@@ -125,15 +221,8 @@ class CatalogService:
                             },
                         "images": images,
                         "attributes": {}}
-            keys_to_be_removed = ["provider_id", "circle_radius", "bpp_uri", "locations", "long_desc", "storefront_timing", 
-                "short_desc", "city_code", "product_hash", "ntags", "days", "bpp_id", "pickup_pincodes", 
-                "blocked_products_details", "inventory_details", "cancel_details", "attr_tags", "hide_return",
-                "return_product_detail_base_on_rule","dispatch_details","attached_pages", "return_details", "delivery_details",
-                "pricing_details", 
-                "ondc_item_id", "origin_sp", "return_window", "mrp", "sales_price", "origin_mrp","marketplace_mrp", "marketplace_sp", 
-                "category_id", "product_id", "description", "discount_price", "variant_group_id", "discount",
-                'image1', 'image2', 'image3', 'image4', "main_image"]
-            other_params = {key: value for key, value in product_data.items() if key not in keys_to_be_removed}
+            
+            other_params = {key: value for key, value in product_data.items() if key not in Config.KEYS_TO_BE_REMOVED}
             response.get('attributes').update(other_params)
             items.append(response)
         return {'items':items}
