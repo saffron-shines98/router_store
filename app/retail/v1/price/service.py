@@ -1,5 +1,5 @@
 import json
-from app.common_utils import get_current_datetime
+from app.common_utils import get_current_datetime,authenticate_user
 from app.retail.v1.price.price_coordinator import PriceCoordinator
 
 class PriceService:
@@ -25,7 +25,7 @@ class PriceService:
         entity_id = self.generate_api_logs('price', self.params.get('noderetail_item_id'), self.params.get('noderetail_storefront_id'))
         jwt_token= self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        self.coordinator.authenticate_user(jwt_token, nodesso_id)
+        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
         return {}
 
@@ -33,6 +33,6 @@ class PriceService:
         entity_id = self.generate_api_logs('bulk_price','',self.params.get('noderetail_storefront_id'))
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        self.coordinator.authenticate_user(jwt_token, nodesso_id)
+        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_bulk_price_update_sync_q')
         return {}

@@ -15,7 +15,7 @@ from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
-from app.exceptions import InvalidAuth
+from app.exceptions import InvalidAuth, AuthMissing
 
 
 def render_error_response(msg, status=None) -> Response:
@@ -163,3 +163,12 @@ def header_verification_node_sso(headers):
         return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
     raise InvalidAuth('Invalid auth token.')
 
+def authenticate_user(jwt_token, nodesso_id):
+    if not jwt_token:
+        raise AuthMissing('Auth token is missing')
+    payload = {
+        'nodesso_id': nodesso_id,
+        'auth_token': jwt_token
+    }
+    header_verification_node_sso(payload)
+    return dict()

@@ -1,7 +1,7 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime, clean_string
+from app.common_utils import get_current_datetime, clean_string, authenticate_user
 from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
@@ -44,13 +44,7 @@ class OrderService:
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        if not jwt_token:
-            raise AuthMissing('Auth token is missing')
-        payload = {
-            'nodesso_id': nodesso_id,
-            'auth_token': jwt_token
-        }
-        self.coordinator.validate_jwt(payload)
+        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         format_to_check= "%d:%m:%Y %H:%M:%S"
         try:
             parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
@@ -161,7 +155,7 @@ class OrderService:
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             raise AlreadyExists('Order Already Exist')
-        self.authenticate_user()
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
