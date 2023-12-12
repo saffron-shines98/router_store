@@ -4,7 +4,7 @@ import json
 from app.common_utils import get_current_datetime
 from app.exceptions import AuthMissing
 from app.retail.v1.catalog.catalog_coordinator import CatalogCoordinator
-from app.common_utils import validate_jwt, validate_jwt_though_auth1,header_verification_node_sso
+from app.common_utils import validate_jwt, validate_jwt_though_auth1,header_verification_node_sso, authenticate_user
 import math
 from app.es_query_builder import ESQueryBuilder
 
@@ -14,17 +14,6 @@ class CatalogService:
         self.headers = headers
         self.coordinator = CatalogCoordinator()
         self.es_query_builder = ESQueryBuilder()
-    
-    def authenticate_user(self):
-        jwt_token = self.headers.get('Auth-Token')
-        nodesso_id = self.headers.get('Nodesso-Id')
-        if not jwt_token:
-            raise AuthMissing('Auth token is missing')
-        payload = {
-            'nodesso_id': nodesso_id,
-            'auth_token': jwt_token
-        }
-        header_verification_node_sso(payload)
     
     def extract_image_url(self, image_params):
         if 'http' in image_params:
@@ -52,7 +41,7 @@ class CatalogService:
         return image_list
 
     def fetch_catalog(self):
-        self.authenticate_user()
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -148,7 +137,7 @@ class CatalogService:
         return {'items':items}
     
     def fetch_catalog_from_es(self):
-        self.authenticate_user()
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')
@@ -247,7 +236,7 @@ class CatalogService:
         return final_feed_query
 
     def fetch_catalog_count(self):
-        self.authenticate_user()
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance', 
                                                                    [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
         instance_details = plotch_instance.get('instance_details')

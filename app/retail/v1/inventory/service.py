@@ -1,7 +1,7 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime, clean_string
+from app.common_utils import get_current_datetime, clean_string, authenticate_user
 from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists
 from app.retail.v1.inventory.inventory_coordinator import InventoryCoordinator
 
@@ -37,6 +37,6 @@ class InventoryService:
 
     def update_inventory(self):
         self.generate_api_logs('inventory', self.params.get('item_id'), self.params.get('storefront_instance_id'))
-        self.authenticate_user()
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
         return {}
