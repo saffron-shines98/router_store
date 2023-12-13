@@ -220,7 +220,8 @@ class ESUtility:
     def __init__(self, es_handle, index, doctype):
         self.es_handle = es_handle
         self.es_index = index
-        self.es_doctype = doctype
+        self.es_doctype = '_doc' if index in ['plotch_products_p4p76erzw4', 'plotch_products_j1uksul7pz',
+            'plotch_products_zfykjvf9j0', 'plotch_products_qpygsziwtp'] else doctype
 
     @staticmethod
     def _get_parsed_es_data(es_data) -> list:
