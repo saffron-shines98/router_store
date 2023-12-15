@@ -87,14 +87,9 @@ class OrderService:
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
-        nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
             raise AuthMissing('Auth token is missing')
-        payload = {
-            'nodesso_id': nodesso_id,
-            'auth_token': jwt_token
-        }
-        self.coordinator.validate_jwt(payload)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
