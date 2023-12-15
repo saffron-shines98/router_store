@@ -89,7 +89,7 @@ class OrderService:
         jwt_token = self.headers.get('Auth-Token')
         if not jwt_token:
             raise AuthMissing('Auth token is missing')
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
@@ -150,7 +150,7 @@ class OrderService:
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             raise AlreadyExists('Order Already Exist')
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
