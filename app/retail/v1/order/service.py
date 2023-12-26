@@ -149,7 +149,7 @@ class OrderService:
         check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
-            raise AlreadyExists('Order Already Exist')
+            return 'success'
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
