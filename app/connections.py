@@ -113,10 +113,13 @@ class RabbitMQConnection(object):
 
     def push_message_to_queue(self, exchange='', routing_key='', body=''):
         try:
-            self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
+            try:
+                self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
+            except Exception as e:
+                self.rabbit_conn = self.get_rabbitmq_connection()
+                self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
         except Exception as e:
-            self.rabbit_conn = self.get_rabbitmq_connection()
-            self.rabbit_conn.basic_publish(exchange=exchange, routing_key=routing_key, body=body)
+            return str(e)
 
 
 class SqlConnectionNodeSso(object):
