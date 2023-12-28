@@ -73,7 +73,7 @@ class BaseCoordinator:
         return response
     
     def push_data_in_queue(self, params, routing_key='', exchange=''):
-        self.rabbitmq_conn.push_message_to_queue(exchange, routing_key, json.dumps(params))
+        return self.rabbitmq_conn.push_message_to_queue(exchange, routing_key, json.dumps(params))
 
     def validate_jwt(self, payload):
         response = SSOCoordinator().post('/verifyHeader', payload=payload,headers={'Authorization': Config.Authorization})

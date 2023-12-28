@@ -39,7 +39,8 @@ class OrderService:
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'type' : 'status'
+            'type' : 'status',
+            'identifier_id': self.params.get('order_id')
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         jwt_token = self.headers.get('Auth-Token')
@@ -64,7 +65,9 @@ class OrderService:
             "storefront_id": self.params.get('noderetail_storefront_id')
         }
         entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        if error_msg:
+            self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request', [{'col': 'entity_id', 'val': entity_id}])
         return order_payload
 
     def customer_status_create(self):
