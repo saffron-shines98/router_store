@@ -153,7 +153,7 @@ class OrderService:
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             return 'success'
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
@@ -193,9 +193,9 @@ class OrderService:
             'item_id': order_items.get('id'),                 
             'qty': order_items.get('qty'),                     
             'price': order_items.get('price'),                   
-            'discount': order_items.get('discount'),                
+            'discount': abs(int(order_items.get('discount'))),
             'taxes': order_items.get('taxes'),                   
-            'order_discount': order_info.get('discount'),          
+            'order_discount': abs(int(order_info.get('discount'))),
             'packaging_charges': order_info.get('packaging_charges'),       
             'delivery_charges': order_info.get('delivery_charges'),        
             'other_charges': order_info.get('other_charges'),           
@@ -208,7 +208,7 @@ class OrderService:
             'status': 0,                  
             'created_at': get_current_datetime(),                                                   
             'is_api': 1
-        }      
+        }
         self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
         params = {
             'payment_mode': payment_info.get('payment_mode'),
