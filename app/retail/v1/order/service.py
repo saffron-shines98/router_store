@@ -193,9 +193,9 @@ class OrderService:
             'item_id': order_items.get('id'),                 
             'qty': order_items.get('qty'),                     
             'price': order_items.get('price'),                   
-            'discount': order_items.get('discount'),                
+            'discount': abs(int(order_items.get('discount'))),
             'taxes': order_items.get('taxes'),                   
-            'order_discount': order_info.get('discount'),          
+            'order_discount': abs(int(order_info.get('discount'))),
             'packaging_charges': order_info.get('packaging_charges'),       
             'delivery_charges': order_info.get('delivery_charges'),        
             'other_charges': order_info.get('other_charges'),           
@@ -208,7 +208,7 @@ class OrderService:
             'status': 0,                  
             'created_at': get_current_datetime(),                                                   
             'is_api': 1
-        }      
+        }
         self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
         params = {
             'payment_mode': payment_info.get('payment_mode'),
