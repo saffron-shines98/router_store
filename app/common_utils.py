@@ -10,7 +10,7 @@ import jwt
 import base64
 import re
 from time import time
-import pysodium as nacl
+# import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
@@ -18,12 +18,12 @@ from config import Config
 from app.exceptions import InvalidAuth, AuthMissing
 
 
-def render_error_response(msg, status=None) -> Response:
-    status = 500 if not status else status
-    body = {'error': msg}
-    return Response(json.dumps(body), status, content_type='application/json')
+# def render_error_response(msg, status=None) -> Response:
+#     status = 500 if not status else status
+#     body = {'error': msg}
+#     return Response(json.dumps(body), status, content_type='application/json')
 
-def render_error_response_400(msg, payload, header, status=None) -> Response:
+def render_error_response(msg, status=None, payload=None, header=None) -> Response:
     status = 500 if not status else status
     base_coordinator = BaseCoordinator()
     body = {'error': msg}
