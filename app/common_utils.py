@@ -23,6 +23,21 @@ def render_error_response(msg, status=None) -> Response:
     body = {'error': msg}
     return Response(json.dumps(body), status, content_type='application/json')
 
+def render_error_response_400(msg, payload, header, status=None) -> Response:
+    status = 500 if not status else status
+    base_coordinator = BaseCoordinator()
+    body = {'error': msg}
+    error_msg = {
+            'request': json.dumps(payload),
+            'headers': json.dumps(header),
+            'response': json.dumps(msg),
+            'created_at': get_current_datetime(),
+            'status': 8
+    }
+    log = base_coordinator.save_data_in_db(error_msg, 'plotch_noderetailapi_request_logs', commit=True)
+    return Response(json.dumps(body), status, content_type='application/json')
+
+
 
 def render_success_response(response, msg='', status=1) -> Response:
     body = {

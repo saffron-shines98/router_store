@@ -1,6 +1,6 @@
 from flask import request
 from functools import wraps
-from app.common_utils import render_error_response
+from app.common_utils import render_error_response, render_error_response_400
 from app.exceptions import AuthMissing, InvalidAuth, CustomrAlreadyExist, AlreadyExists, InvalidDateFormat
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
@@ -40,7 +40,7 @@ def validate_params(param_config=None, token_required=True):
                 validate(params, param_config, format_checker=FormatChecker())
                 return func(params=params, headers=headers, *args, **kwargs)
             except (ValidationError, SchemaError) as e:
-                return render_error_response('Invalid Input Fields', 400)
+                return render_error_response_400('Invalid Input Fields',params, headers, 400)
             except AuthMissing as e:
                 return render_error_response(e.message, e.http_code)
             except InvalidAuth as e:
@@ -52,7 +52,7 @@ def validate_params(param_config=None, token_required=True):
             except InvalidDateFormat as e:
                 return render_error_response(e.message, e.http_code)
             except Exception as e:
-                return render_error_response(str(e), 400)
+                return render_error_response_400(str(e), params, headers, 400)
         return decorated_function
 
     return deco
