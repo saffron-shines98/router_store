@@ -25,13 +25,7 @@ from app.exceptions import InvalidAuth, AuthMissing
 #     return Response(json.dumps(body), status, content_type='application/json')
 
 def get_source_type(stacktrace):
-    stack_trace_json = stacktrace
-    data = json.dumps(stack_trace_json)
-    try:
-        stack_trace_dict = json.loads(data)
-    except:
-        stack_trace_dict = {}
-    endpoint_value = stack_trace_dict.get('endpoint', '')
+    endpoint_value = stacktrace.get('endpoint', '')
     parts = endpoint_value.split('/')
     source_type = parts[1] if len(parts) > 1 else parts[0]
     return source_type
