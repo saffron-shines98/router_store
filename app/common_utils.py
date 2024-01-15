@@ -8,9 +8,10 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import jwt
 import base64
+import traceback
 import re
 from time import time
-import pysodium as nacl
+# import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
@@ -23,19 +24,37 @@ from app.exceptions import InvalidAuth, AuthMissing
 #     body = {'error': msg}
 #     return Response(json.dumps(body), status, content_type='application/json')
 
+def get_source_type(stacktrace):
+    stack_trace_json = stacktrace
+    data = json.dumps(stack_trace_json)
+    try:
+        stack_trace_dict = json.loads(data)
+    except:
+        stack_trace_dict = {}
+    endpoint_value = stack_trace_dict.get('endpoint', '')
+    parts = endpoint_value.split('/')
+    source_type = parts[1] if len(parts) > 1 else parts[0]
+    return source_type
 
-def render_error_response(msg, status=None, payload=None, header=None) -> Response:
+
+def render_error_response(msg, status=None, stacktrace=None, payload=None) -> Response:
     status = 500 if not status else status
     base_coordinator = BaseCoordinator()
     body = {'error': msg}
+    type =None
+    tb = traceback.format_exc()
+    status_code = {'error_message':msg, 'status_code': status }
+    error_log = {'file_path':stacktrace, 'line_number': tb}
+    if stacktrace is not None:
+        type = get_source_type(stacktrace)
     error_msg = {
             'request': json.dumps(payload),
-            'headers': json.dumps(header),
-            'response': json.dumps(msg),
             'created_at': get_current_datetime(),
-            'status': 8
+            'type': type,
+            'error_msg': json.dumps(status_code),
+            'error_source': json.dumps(error_log),
     }
-    log = base_coordinator.save_data_in_db(error_msg, 'plotch_noderetailapi_request_logs', commit=True)
+    log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
     return Response(json.dumps(body), status, content_type='application/json')
 
 
