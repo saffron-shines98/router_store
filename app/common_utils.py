@@ -31,12 +31,13 @@ def get_source_type(stacktrace):
     return source_type
 
 
-def render_error_response(msg, status=None, stacktrace=None, payload=None) -> Response:
+def render_error_response(msg, status=None, stacktrace=None, payload=None, header=None) -> Response:
     try:
         status = 500 if not status else status
         base_coordinator = BaseCoordinator()
         body = {'error': msg}
         type =None
+        head = {'header': {'Host': header.get('Host'), 'Auth-Token': header.get('Auth-Token'), 'Nodesso-Id': header.get('Nodesso-Id'), 'User-Agent': header.get('User-Agent')}}
         tb = traceback.format_exc()
         status_code = {'error_message':msg, 'status_code': status }
         error_log = {'file_path':stacktrace, 'line_number': tb}
@@ -44,6 +45,7 @@ def render_error_response(msg, status=None, stacktrace=None, payload=None) -> Re
             type = get_source_type(stacktrace)
         error_msg = {
                 'request': json.dumps(payload),
+                'headers': json.dumps(head.get('header')),
                 'created_at': get_current_datetime(),
                 'type': type,
                 'error_msg': json.dumps(status_code),
