@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import jwt
 import base64
+import traceback
 import re
 from time import time
 import pysodium as nacl
@@ -18,10 +19,41 @@ from config import Config
 from app.exceptions import InvalidAuth, AuthMissing
 
 
-def render_error_response(msg, status=None) -> Response:
-    status = 500 if not status else status
-    body = {'error': msg}
-    return Response(json.dumps(body), status, content_type='application/json')
+# def render_error_response(msg, status=None) -> Response:
+#     status = 500 if not status else status
+#     body = {'error': msg}
+#     return Response(json.dumps(body), status, content_type='application/json')
+
+def get_source_type(stacktrace):
+    endpoint_value = stacktrace.get('endpoint', '')
+    parts = endpoint_value.split('/')
+    source_type = parts[1] if len(parts) > 1 else parts[0]
+    return source_type
+
+
+def render_error_response(msg, status=None, stacktrace=None, payload=None) -> Response:
+    try:
+        status = 500 if not status else status
+        base_coordinator = BaseCoordinator()
+        body = {'error': msg}
+        type =None
+        tb = traceback.format_exc()
+        status_code = {'error_message':msg, 'status_code': status }
+        error_log = {'file_path':stacktrace, 'line_number': tb}
+        if stacktrace is not None:
+            type = get_source_type(stacktrace)
+        error_msg = {
+                'request': json.dumps(payload),
+                'created_at': get_current_datetime(),
+                'type': type,
+                'error_msg': json.dumps(status_code),
+                'error_source': json.dumps(error_log),
+        }
+        log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
+        return Response(json.dumps(body), status, content_type='application/json')
+    except Exception as e:
+        return Response(json.dumps({'error': msg}), status, content_type='application/json')
+
 
 
 def render_success_response(response, msg='', status=1) -> Response:
