@@ -52,7 +52,7 @@ def render_error_response(msg, status=None, stacktrace=None, payload=None) -> Re
         log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
         return Response(json.dumps(body), status, content_type='application/json')
     except Exception as e:
-        return {}
+        return Response(json.dumps({'error': msg}), status, content_type='application/json')
 
 
 
