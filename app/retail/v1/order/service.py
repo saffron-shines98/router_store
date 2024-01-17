@@ -37,12 +37,10 @@ class OrderService:
     def update_order_status(self):
         log_params = {
             'request': json.dumps(self.params),
-            'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'type' : 'status',
             'identifier_id': self.params.get('order_id')
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
