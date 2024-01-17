@@ -38,7 +38,9 @@ class OrderService:
         log_params = {
             'request': json.dumps(self.params),
             'created_at': get_current_datetime(),
-            'identifier_id': self.params.get('order_id')
+            'identifier_id': self.params.get('order_id'),
+            'status': 0,
+            'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
         entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
