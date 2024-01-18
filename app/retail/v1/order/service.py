@@ -67,10 +67,16 @@ class OrderService:
             "parent_id": entity,
             "storefront_id": self.params.get('noderetail_storefront_id')
         }
-        entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        try:
+            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        except:
+            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
         error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
         if error_msg:
-            self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request', [{'col': 'entity_id', 'val': entity_id}])
+            try:
+                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request', [{'col': 'entity_id', 'val': entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request',[{'col': 'entity_id', 'val': entity_id}])
         return order_payload
 
     def customer_status_create(self):
