@@ -42,7 +42,10 @@ class OrderService:
             'status': 0,
             'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+        try:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+        except:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
