@@ -80,10 +80,16 @@ class OrderService:
         return order_payload
 
     def customer_status_create(self):
-        account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        try:
+            account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        except:
+            account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
         identifier_id = self.params.get('customer_id')
         identifier_instance_id = self.params.get('noderetail_customer_instance_id')
-        check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
+        try:
+            check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
+        except:
+            check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
@@ -95,13 +101,16 @@ class OrderService:
             'identifier_id': identifier_id,
             'identifier_instance_id':identifier_instance_id
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
         if not jwt_token:
             raise AuthMissing('Auth token is missing')
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
@@ -151,7 +160,10 @@ class OrderService:
             'is_api': 1,
             'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
-        self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+        try:
+            self.coordinator.save_data_in_db(customer_status_payload, 'select ')
+        except:
+            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
 
     
