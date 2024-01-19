@@ -49,4 +49,13 @@ class InventoryService:
         if error_msg:
             self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
             self.coordinator.update_data_in_db({'status': 8}, 'plotch_inventory_importer_data',[{'col': 'entity_id', 'val': inventory_entity_id}])
+        try:
+            error_msg = self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
+        except:
+            error_msg = self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
+        if error_msg:
+            try:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg},'plotch_noderetailapi_request_logs',[{'col': 'entity_id', 'val': entity_id}])
         return {}

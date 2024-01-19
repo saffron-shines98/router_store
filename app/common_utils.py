@@ -182,7 +182,10 @@ def clean_string(string):
         return None
     
 def header_verification_node_sso(headers):
-    nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
+    try:
+        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
+    except:
+        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
     public_key = nodesso_details.get('public_key')
     if not public_key:
         raise InvalidAuth('Public key not found')
