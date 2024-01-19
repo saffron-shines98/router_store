@@ -42,12 +42,11 @@ class CatalogService:
 
     def fetch_catalog(self):
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        plotch_instance_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}]
         try:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',plotch_instance_object)
         except:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',plotch_instance_object)
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
@@ -70,10 +69,11 @@ class CatalogService:
         elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No']:
             condition_str += ''' and pisi.qty=0 '''
         if self.params.get('noderetail_agg_id'):
+            agg_id_object = [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}]
             try:
-                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
+                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance',agg_id_object , ['vendor_id'])
             except:
-                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
+                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance',agg_id_object, ['vendor_id'])
             if retail_user_instance_data:
                 condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
         noderetail_catalog_id = ''
@@ -148,12 +148,11 @@ class CatalogService:
     
     def fetch_catalog_from_es(self):
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        instance_common_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}]
         try:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',instance_common_object)
         except:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',instance_common_object)
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
@@ -161,10 +160,11 @@ class CatalogService:
         except :
             catalog = ""
             instance_details = dict()
+        catalog_common_object = [{'col':'id', 'val': catalog}]
         try:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', catalog_common_object)
         except:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', catalog_common_object)
         catalog_id = crs_catalog.get('catalog_id')
         noderetail_catalog_id = ''
         if catalog_id and self.params.get('noderetail_catalog_id'):
@@ -172,10 +172,11 @@ class CatalogService:
         items = []
         final_catalog_fetch_query = self.get_catalog_fetch_query(instance_details.get('inventory'))
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
+        domain_common_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}]
         try:
-            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
+            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', domain_common_object, ['primary_domain'])
         except:
-            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
+            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', domain_common_object, ['primary_domain'])
         for product_data in joined_result:
             images = self.extract_image_from_params(product_data, product_data)
             try:
@@ -257,12 +258,11 @@ class CatalogService:
 
     def fetch_catalog_count(self):
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        count_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}]
         try:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',count_object)
         except:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',
-                                                                       [{'col': 'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}])
+            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',count_object)
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
