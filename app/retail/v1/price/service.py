@@ -19,16 +19,26 @@ class PriceService:
             'identifier_id': identifier_id,
             'identifier_instance_id': identifier_instance_id
         }
-        return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+
 
     def update_price(self):
         entity_id = self.generate_api_logs('price', self.params.get('noderetail_item_id'), self.params.get('noderetail_storefront_id'))
         jwt_token= self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
-        error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
+        try:
+            error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
+        except:
+            error_msg = self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_price_update_sync_q')
         if error_msg:
-            self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+            try:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg},'plotch_noderetailapi_request_logs',[{'col': 'entity_id', 'val': entity_id}])
         return {}
 
     def bulk_update_price(self):
@@ -36,5 +46,8 @@ class PriceService:
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
         authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
-        self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_bulk_price_update_sync_q')
+        try:
+            self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_bulk_price_update_sync_q')
+        except:
+            self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_bulk_price_update_sync_q')
         return {}
