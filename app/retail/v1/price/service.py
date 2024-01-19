@@ -34,23 +34,27 @@ class PriceService:
         mrp = pricing_info.get('mrp')
         sale_price = pricing_info.get('sale_price')
         discounted_price = pricing_info.get('discounted_price')
-        price_entity_id = self.coordinator.save_data_in_db(
-            {'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
-             'storefront_id': self.params.get('noderetail_storefront_id'), 'mrp': mrp, 'sale_price': sale_price,
-             'discounted_price': discounted_price, 'created_at': get_current_datetime()}, 'plotch_price_importer_data')
-        error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id, 'price_entity_id': price_entity_id}, 'noderetail_price_update_sync_q')
-        if error_msg:
-            self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
-            self.coordinator.update_data_in_db({'status': 8}, 'plotch_price_importer_data',[{'col': 'entity_id', 'val': price_entity_id}])
         try:
-            error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
+           price_entity_id = self.coordinator.save_data_in_db({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
+           'storefront_id': self.params.get('noderetail_storefront_id'), 'mrp': mrp, 'sale_price': sale_price,
+           'discounted_price': discounted_price, 'created_at': get_current_datetime()}, 'plotch_price_importer_data')
         except:
-            error_msg = self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_price_update_sync_q')
+            price_entity_id = self.coordinator.save_data_in_db({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
+            'storefront_id': self.params.get('noderetail_storefront_id'), 'mrp': mrp, 'sale_price': sale_price,
+            'discounted_price': discounted_price, 'created_at': get_current_datetime()}, 'plotch_price_importer_data')
+        try:
+            error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id, 'price_entity_id': price_entity_id}, 'noderetail_price_update_sync_q')
+        except:
+            error_msg = self.coordinator.push_data_in_queue({'entity_id': entity_id, 'price_entity_id': price_entity_id}, 'noderetail_price_update_sync_q')
         if error_msg:
             try:
                 self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
             except:
                 self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg},'plotch_noderetailapi_request_logs',[{'col': 'entity_id', 'val': entity_id}])
+            try:
+                self.coordinator.update_data_in_db({'status': 8}, 'plotch_price_importer_data', [{'col': 'entity_id', 'val': price_entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8}, 'plotch_price_importer_data', [{'col': 'entity_id', 'val': price_entity_id}])
         return {}
 
     def bulk_update_price(self):
