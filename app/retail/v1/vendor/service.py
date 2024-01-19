@@ -19,7 +19,10 @@ class VendorService:
             'identifier_id': identifier_id,
             'identifier_instance_id': identifier_instance_id
         }
-        return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -36,8 +39,12 @@ class VendorService:
         for provider_details in self.params.get('providers'):
             provider_id = provider_details.get('provider_id')
             user_instance_id = provider_details.get('noderetail_user_instance_id')
-            log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},
-                                                                {'col': 'identifier_instance_id', 'val': user_instance_id}], ['entity_id']).get('entity_id')
+            try:
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},
+                                                                    {'col': 'identifier_instance_id', 'val': user_instance_id}], ['entity_id']).get('entity_id')
+            except:
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs',
+                                                                     [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id','val': user_instance_id}], ['entity_id']).get('entity_id')
             if log_exist:
                 raise AlreadyExists('Provider already exists')
             log_id = self.generate_api_logs(type='vendor', identifier_id=provider_id, identifier_instance_id=user_instance_id)
@@ -46,8 +53,11 @@ class VendorService:
             certs = provider_details.get('certs', {})
             serviceability = provider_details.get('serviceability', [{}])[0]
             banks = provider_details.get('banks', [{}])[0]
-            account_id = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col': 'user_instance_id', 'val': user_instance_id}], 
-                                                                ['account_id']).get('account_id')
+            try:
+                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col': 'user_instance_id', 'val': user_instance_id}],
+                                                                    ['account_id']).get('account_id')
+            except:
+                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col': 'user_instance_id', 'val': user_instance_id}],['account_id']).get('account_id')
             request_params = {
                 'provider_id': provider_id,
                 'agg_marketplace_id': provider_details.get('agg_marketplace_id'),
@@ -126,7 +136,10 @@ class VendorService:
                         'pickup_store_start_hour': open_hours.get('start_time'),
                         'pickup_store_close_hour': open_hours.get('end_time'),
                     })
-            self.coordinator.save_data_in_db(request_params, 'plotch_vendor_importer_data')
+            try:
+                self.coordinator.save_data_in_db(request_params, 'plotch_vendor_importer_data')
+            except:
+                self.coordinator.save_data_in_db(request_params, 'plotch_vendor_importer_data')
         return 'success'
         
 

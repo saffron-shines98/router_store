@@ -42,7 +42,13 @@ class InventoryService:
         entity_id = self.generate_api_logs('inventory', self.params.get('item_id'), self.params.get('storefront_instance_id'))
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         self.params['log_id'] = entity_id
-        error_msg = self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
+        try:
+            error_msg = self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
+        except:
+            error_msg = self.coordinator.push_data_in_queue(self.params, 'noderetail_inventory_update_sync_q')
         if error_msg:
-            self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+            try:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg},'plotch_noderetailapi_request_logs',[{'col': 'entity_id', 'val': entity_id}])
         return {}

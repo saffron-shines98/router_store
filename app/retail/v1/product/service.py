@@ -21,8 +21,14 @@ class ProductService:
         db_params = {'request': json.dumps(self.params), 'headers': json.dumps(self.headers),
             'status': 0, 'created_at': get_current_datetime(), 'created_by': 1, 'type': 'product',
             'identifier_id': self.params.get('item_id', '')}
-        entity_id = self.coordinator.save_data_in_db_with_place_holder(db_params, 'plotch_noderetailapi_request_logs')
-        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'product_create_request_log_q')
+        try:
+            entity_id = self.coordinator.save_data_in_db_with_place_holder(db_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity_id = self.coordinator.save_data_in_db_with_place_holder(db_params,'plotch_noderetailapi_request_logs')
+        try:
+            self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'product_create_request_log_q')
+        except:
+            self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'product_create_request_log_q')
         if not self.headers.get('Auth-Token', ''):
             raise AuthMissing('Auth token is missing')
         payload = {'nodesso_id': self.headers.get('Nodesso-Id', ''),'auth_token': self.headers.get('Auth-Token', '')}
