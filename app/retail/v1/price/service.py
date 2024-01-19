@@ -29,7 +29,7 @@ class PriceService:
         entity_id = self.generate_api_logs('price', self.params.get('noderetail_item_id'), self.params.get('noderetail_storefront_id'))
         jwt_token= self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        # authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
+        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         try:
             error_msg = self.coordinator.push_data_in_queue({'entity_id':entity_id}, 'noderetail_price_update_sync_q')
         except:
