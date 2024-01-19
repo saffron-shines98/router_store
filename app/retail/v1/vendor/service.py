@@ -39,10 +39,11 @@ class VendorService:
         for provider_details in self.params.get('providers'):
             provider_id = provider_details.get('provider_id')
             user_instance_id = provider_details.get('noderetail_user_instance_id')
+            log_common_object = [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id', 'val': user_instance_id}]
             try:
-                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id', 'val': user_instance_id}], ['entity_id']).get('entity_id')
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs',log_common_object , ['entity_id']).get('entity_id')
             except:
-                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id','val': user_instance_id}], ['entity_id']).get('entity_id')
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', log_common_object, ['entity_id']).get('entity_id')
             if log_exist:
                 raise AlreadyExists('Provider already exists')
             log_id = self.generate_api_logs(type='vendor', identifier_id=provider_id, identifier_instance_id=user_instance_id)
@@ -51,11 +52,11 @@ class VendorService:
             certs = provider_details.get('certs', {})
             serviceability = provider_details.get('serviceability', [{}])[0]
             banks = provider_details.get('banks', [{}])[0]
+            account_common_object= [{'col': 'user_instance_id', 'val': user_instance_id}]
             try:
-                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col': 'user_instance_id', 'val': user_instance_id}],
-                                                                    ['account_id']).get('account_id')
+                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', account_common_object,['account_id']).get('account_id')
             except:
-                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col': 'user_instance_id', 'val': user_instance_id}],['account_id']).get('account_id')
+                account_id = self.coordinator.get_single_data_from_db('retail_user_instance', account_common_object,['account_id']).get('account_id')
             request_params = {
                 'provider_id': provider_id,
                 'agg_marketplace_id': provider_details.get('agg_marketplace_id'),
