@@ -40,11 +40,9 @@ class VendorService:
             provider_id = provider_details.get('provider_id')
             user_instance_id = provider_details.get('noderetail_user_instance_id')
             try:
-                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},
-                                                                    {'col': 'identifier_instance_id', 'val': user_instance_id}], ['entity_id']).get('entity_id')
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id', 'val': user_instance_id}], ['entity_id']).get('entity_id')
             except:
-                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs',
-                                                                     [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id','val': user_instance_id}], ['entity_id']).get('entity_id')
+                log_exist = self.coordinator.get_single_data_from_db('plotch_noderetailapi_request_logs', [{'col': 'identifier_id', 'val': provider_id},{'col': 'identifier_instance_id','val': user_instance_id}], ['entity_id']).get('entity_id')
             if log_exist:
                 raise AlreadyExists('Provider already exists')
             log_id = self.generate_api_logs(type='vendor', identifier_id=provider_id, identifier_instance_id=user_instance_id)
