@@ -48,8 +48,9 @@ def render_error_response(msg, status=None, stacktrace=None, payload=None, heade
                 'headers': json.dumps(head.get('header')),
                 'created_at': get_current_datetime(),
                 'type': type,
+                'status': 0,
                 'error_msg': json.dumps(status_code),
-                'error_source': json.dumps(error_log),
+                'error_source': json.dumps(error_log)
         }
         log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
         return Response(json.dumps(body), status, content_type='application/json')
