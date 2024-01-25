@@ -1,3 +1,5 @@
+import decimal
+
 from config import Config
 from datetime import datetime
 import json
@@ -256,9 +258,113 @@ class OrderService:
             self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
         return 'success'
 
-    def order_status(self):
-        entity_id = self.generate_api_logs('order')
-        self.authenticate_user()
-        self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_order_status_fetch_q')
-        return {}
+    def order_fetch(self):
+        identifier_id = self.params.get('order_id')  # posr.order_id
+        noderetail_storefront_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+        noderetail_account_user_id = self.params.get('noderetail_account_user_id')
+        identifier_instance_id = self.params.get('noderetail_order_instance_id')
+        order_status = self.params.get('order_status', '')
+
+        entity_id = self.generate_api_logs(type='order_fetch')
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
+
+        page_number = max(int(self.params.get('page_number', 1)), 1)
+        page_size = int(self.params.get('page_size', 10))
+        if page_size or page_number:
+            pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
+
+        get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, pagination_condition)
+
+        response_payload = {
+            "api_action_status": "success",
+            "order_fetch_request_id": "786986121",
+            "noderetail_account_user_id": noderetail_account_user_id,
+            "noderetail_order_instance_id": identifier_instance_id,
+            "orders": []
+        }
+        # print("get_orders_data:", get_orders_data)
+
+        for order_data in get_orders_data:
+            if isinstance(order_data, dict):
+                payload = {
+                    "noderetail_order_id": order_data.get("noderetail_order_id"),
+                    "network_order_id": order_data.get("ondc_network_order_id"), #
+                    "client_order_id": identifier_id,
+                    "customer_info": {
+                        "customer_id": order_data.get("alternate_customer_id"),
+                        "noderetail_customer_id": order_data.get("noderetail_customer_id"), #
+                        "contact": {
+                            "phone": order_data.get("phone"),
+                            "email": order_data.get("email")
+                        }
+                    },
+                    "billing_info": {
+                        "contact": {
+                            "phone": order_data.get("billing_contact_number"),
+                            "email": order_data.get("billing_email")
+                        },
+                        "location": {
+                            "gps": order_data.get("billing_gps"),
+                            "building": order_data.get("billing_building"),
+                            "street_name": order_data.get("billing_street"),
+                            "locality": order_data.get("billing_locality"),
+                            "city": order_data.get("billing_city"),
+                            "area_code": order_data.get("billing_area_code"),
+                            "state": order_data.get("billing_state"),
+                            "country": order_data.get("billing_country"),
+                            "label": order_data.get("billing_label")
+                        }
+                    },
+                    "shipping_info": {
+                        "contact": {
+                            "phone": order_data.get("shipping_contact_number"),
+                            "email": order_data.get("shipping_email")
+                        },
+                        "location": {
+                            "gps": order_data.get("shipping_gps"),
+                            "building": order_data.get("shipping_building"),
+                            "street_name": order_data.get("shipping_street"),
+                            "locality": order_data.get("shipping_locality"),
+                            "city": order_data.get("shipping_city"),
+                            "area_code": order_data.get("shipping_area_code"),
+                            "state": order_data.get("shipping_state"),
+                            "country": order_data.get("shipping_country"),
+                            "label": order_data.get("shipping_label")
+                        }
+                    },
+                    "order_info": {
+                        "order_items": [
+                            {
+                                "id": order_data.get("item_id"),
+                                "qty": order_data.get("qty"),
+                                "price": str(order_data.get("price")),
+                                "discount": str(order_data.get("discount")),
+                                "taxes": str(order_data.get("taxes"))
+                            }
+                        ],
+                        "discount": str(order_data.get("order_discount")),
+                        "packaging_charges": str(order_data.get("packaging_charges")),
+                        "delivery_charges": str(order_data.get("delivery_charges")),
+                        "other_charges": str(order_data.get("other_charges")),
+                        "order_total": str(order_data.get("order_total"))
+                    },
+                    "payment_info": {
+                        "payment_mode": order_data.get("payment_mode"),
+                        "payment_transaction_id": order_data.get("payment_transaction_id"),
+                        "payment_status": order_data.get("payment_status")
+                    },
+                    "fulfillments": [
+                        {
+                            "fulfillment_id": order_data.get("fulfillment_id"),
+                            "fulfillment_mode": order_data.get("fulfillment_mode"),
+                            "fulfillment_status": order_data.get("fulfillment_status"),
+                            "fulfillment_courier": order_data.get("fulfillment_courier"),
+                            "fulfillment_tracking": order_data.get("fulfillment_tracking"),
+                            "fulfillment_update_time": order_data.get("fulfillment_update_time")
+                       }
+                    ]
+                }
+                response_payload["orders"].append(payload)
+        return response_payload
+
 
