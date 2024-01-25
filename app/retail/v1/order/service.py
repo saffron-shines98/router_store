@@ -1,7 +1,7 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime, clean_string
+from app.common_utils import get_current_datetime, clean_string, authenticate_user
 from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
@@ -21,7 +21,10 @@ class OrderService:
             'identifier_id': self.params.get('order_id'),
             'identifier_instance_id': self.params.get('noderetail_order_instance_id')
         }
-        return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -37,20 +40,18 @@ class OrderService:
     def update_order_status(self):
         log_params = {
             'request': json.dumps(self.params),
-            'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
-            'type' : 'status'
+            'identifier_id': self.params.get('order_id'),
+            'status': 0,
+            'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+        except:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
-        if not jwt_token:
-            raise AuthMissing('Auth token is missing')
-        payload = {
-            'nodesso_id': nodesso_id,
-            'auth_token': jwt_token
-        }
-        self.coordinator.validate_jwt(payload)
+        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         format_to_check= "%d:%m:%Y %H:%M:%S"
         try:
             parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
@@ -66,17 +67,35 @@ class OrderService:
             "status_created_time": converted_date_time,
             "remark": self.params.get('remark'),
             "created_at":get_current_datetime(),
-            "parent_id": entity
+            "parent_id": entity,
+            "storefront_id": self.params.get('noderetail_storefront_id')
         }
-        entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        try:
+            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        except:
+            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+        try:
+            error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        except:
+            error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
+        if error_msg:
+            try:
+                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request', [{'col': 'entity_id', 'val': entity_id}])
+            except:
+                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request',[{'col': 'entity_id', 'val': entity_id}])
         return order_payload
 
     def customer_status_create(self):
-        account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        try:
+            account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
+        except:
+            account_id = self.coordinator.get_account_id(self.params.get('noderetail_customer_instance_id'))
         identifier_id = self.params.get('customer_id')
         identifier_instance_id = self.params.get('noderetail_customer_instance_id')
-        check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
+        try:
+            check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
+        except:
+            check_duplicacy = self.coordinator.customer_check_duplicacy(identifier_instance_id, identifier_id)
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
@@ -88,18 +107,16 @@ class OrderService:
             'identifier_id': identifier_id,
             'identifier_instance_id':identifier_instance_id
         }
-        entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        try:
+            entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
-        nodesso_id = self.headers.get('Nodesso-Id')
         if not jwt_token:
             raise AuthMissing('Auth token is missing')
-        payload = {
-            'nodesso_id': nodesso_id,
-            'auth_token': jwt_token
-        }
-        self.coordinator.validate_jwt(payload)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_contact_info_phone = self.params.get('customer_contact_info').get('contact').get('phone')
         customer_user_id_phone = self.params.get('customer_contact_info').get('customer_user_id').get('phone')
         if not customer_contact_info_phone and customer_user_id_phone:
@@ -111,14 +128,14 @@ class OrderService:
         location_payload= self.params.get('locations')
         for location in location_payload:
             gps=location.get('gps')
-            city = location.get('city')
+            city = clean_string(location.get('city', ''))
             country= location.get('country')
             area_code= location.get('area_code')
             building = clean_string(location.get('building', ''))
             is_default= location.get('is_default')
-            label = location.get('label')
+            label = clean_string(location.get('label', ''))
             locality = clean_string(location.get('locality', ''))
-            state = location.get('state')
+            state = clean_string(location.get('state', ''))
             street_name = clean_string(location.get('street_name', ''))
             type = location.get('type')
             break
@@ -149,18 +166,24 @@ class OrderService:
             'is_api': 1,
             'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
-        self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+        try:
+            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+        except:
+            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
 
     
     def order_create(self):
         identifier_id = self.params.get('order_id')
         identifier_instance_id = self.params.get('noderetail_order_instance_id')
-        check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
+        try:
+            check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
+        except:
+            check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
-            raise AlreadyExists('Order Already Exist')
-        self.authenticate_user()
+            return 'success'
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
@@ -200,9 +223,9 @@ class OrderService:
             'item_id': order_items.get('id'),                 
             'qty': order_items.get('qty'),                     
             'price': order_items.get('price'),                   
-            'discount': order_items.get('discount'),                
+            'discount': abs(int(order_items.get('discount'))),
             'taxes': order_items.get('taxes'),                   
-            'order_discount': order_info.get('discount'),          
+            'order_discount': abs(int(order_info.get('discount'))),
             'packaging_charges': order_info.get('packaging_charges'),       
             'delivery_charges': order_info.get('delivery_charges'),        
             'other_charges': order_info.get('other_charges'),           
@@ -215,15 +238,22 @@ class OrderService:
             'status': 0,                  
             'created_at': get_current_datetime(),                                                   
             'is_api': 1
-        }      
-        self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
+        }
+        try:
+            self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
+        except:
+            self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
         params = {
             'payment_mode': payment_info.get('payment_mode'),
             'payment_transaction_id': payment_info.get('payment_transaction_id'),
             'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0,
             'created_at': get_current_datetime()
         }
-        self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
+
+        try:
+            self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
+        except:
+            self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
         return 'success'
 
     def order_status(self):
@@ -231,3 +261,4 @@ class OrderService:
         self.authenticate_user()
         self.coordinator.push_data_in_queue({'entity_id': entity_id}, 'noderetail_order_status_fetch_q')
         return {}
+

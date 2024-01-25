@@ -8,20 +8,55 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import jwt
 import base64
+import traceback
 import re
 from time import time
 import pysodium as nacl
 from hashlib import blake2b
-from app.base_coordinator import BaseCoordinator,SSOCoordinator
+from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
-from app.exceptions import InvalidAuth
+from app.exceptions import InvalidAuth, AuthMissing
 
 
-def render_error_response(msg, status=None) -> Response:
-    status = 500 if not status else status
-    body = {'error': msg}
-    return Response(json.dumps(body), status, content_type='application/json')
+# def render_error_response(msg, status=None) -> Response:
+#     status = 500 if not status else status
+#     body = {'error': msg}
+#     return Response(json.dumps(body), status, content_type='application/json')
+
+def get_source_type(stacktrace):
+    endpoint_value = stacktrace.get('endpoint', '')
+    parts = endpoint_value.split('/')
+    source_type = parts[1] if len(parts) > 1 else parts[0]
+    return source_type
+
+
+def render_error_response(msg, status=None, stacktrace=None, payload=None, header=None) -> Response:
+    try:
+        status = 500 if not status else status
+        base_coordinator = BaseCoordinator()
+        body = {'error': msg}
+        type =None
+        head = {'header': {'Host': header.get('Host'), 'Auth-Token': header.get('Auth-Token'), 'Nodesso-Id': header.get('Nodesso-Id'), 'User-Agent': header.get('User-Agent')}}
+        tb = traceback.format_exc()
+        status_code = {'error_message':msg, 'status_code': status }
+        error_log = {'file_path':stacktrace, 'line_number': tb}
+        if stacktrace is not None:
+            type = get_source_type(stacktrace)
+        error_msg = {
+                'request': json.dumps(payload),
+                'headers': json.dumps(head.get('header')),
+                'created_at': get_current_datetime(),
+                'type': type,
+                'status': 0,
+                'error_msg': json.dumps(status_code),
+                'error_source': json.dumps(error_log)
+        }
+        log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
+        return Response(json.dumps(body), status, content_type='application/json')
+    except Exception as e:
+        return Response(json.dumps({'error': msg}), status, content_type='application/json')
+
 
 
 def render_success_response(response, msg='', status=1) -> Response:
@@ -30,6 +65,13 @@ def render_success_response(response, msg='', status=1) -> Response:
     }
     return Response(json.dumps(body), status=200, content_type='application/json')
 
+def render_success_response_with_body(response, msg='', status=1) -> Response:
+    body = {
+        'api_action_status': 'success'
+    }
+    if response:
+        body.update(response)
+    return Response(json.dumps(body), status=200, content_type='application/json')
 
 def validate_request_payload(payload, schema):
     try:
@@ -125,8 +167,46 @@ def validate_jwt(payload):
         return response.json().get('d')
     raise InvalidAuth('Invalid auth token.')
 
+def validate_jwt_though_auth1(payload):
+    response = SSOCoordinatorV1().post('/verifyHeader', payload=payload, headers={'Authorization': Config.Authorization})
+    if response.status_code == 200:
+        return response.json().get('d')
+    raise InvalidAuth('Invalid auth token.')
+
 def clean_string(string):
-    trimmed_string = string.strip()
-    cleaned_string = re.sub(r'\s+', ' ', trimmed_string)
-    cleaned_string = cleaned_string.replace("'", '').replace("\r", ' ').replace("\n", ' ')
-    return cleaned_string
+    if string is not None:
+        trimmed_string = string.strip()
+        cleaned_string = re.sub(r'\s+', ' ', trimmed_string)
+        cleaned_string = cleaned_string.replace("'", '').replace("\r", ' ').replace("\n", ' ')
+        return cleaned_string
+    else:
+        return None
+    
+def header_verification_node_sso(headers):
+    try:
+        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
+    except:
+        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
+    public_key = nodesso_details.get('public_key')
+    if not public_key:
+        raise InvalidAuth('Public key not found')
+    public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
+    public_key = public_key_start + public_key if not public_key.strip().startswith(public_key_start) else public_key
+    public_key = public_key + public_key_end if not public_key.strip().endswith(public_key_end) else public_key
+    public_key = public_key.replace('\n', '').replace('\t', '').replace(public_key_start, public_key_start + '\n').replace(public_key_end, '\n' + public_key_end).strip()
+    decoded_data = decrypt_jwt(public_key, headers.get('auth_token'))
+    challenge_string = decoded_data.get('challenge_string')
+    if nodesso_details.get('challenge_string') == challenge_string:
+        channel_id = challenge_string.split('.')[1]
+        return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
+    raise InvalidAuth('Invalid auth token.')
+
+def authenticate_user(jwt_token, nodesso_id):
+    if not jwt_token:
+        raise AuthMissing('Auth token is missing')
+    payload = {
+        'nodesso_id': nodesso_id,
+        'auth_token': jwt_token
+    }
+    header_verification_node_sso(payload)
+    return dict()
