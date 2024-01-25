@@ -41,19 +41,22 @@ def render_error_response(msg, status=None, stacktrace=None, payload=None, heade
         tb = traceback.format_exc()
         status_code = {'error_message':msg, 'status_code': status }
         error_log = {'file_path':stacktrace, 'line_number': tb}
-        if stacktrace is not None:
-            type = get_source_type(stacktrace)
-        error_msg = {
-                'request': json.dumps(payload),
-                'headers': json.dumps(head.get('header')),
-                'created_at': get_current_datetime(),
-                'type': type,
-                'status': 0,
-                'error_msg': json.dumps(status_code),
-                'error_source': json.dumps(error_log)
-        }
-        log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
-        return Response(json.dumps(body), status, content_type='application/json')
+        if msg =="Customer Already Exist":
+            return Response(json.dumps(body), status, content_type='application/json')
+        else:
+            if stacktrace is not None:
+                type = get_source_type(stacktrace)
+            error_msg = {
+                    'request': json.dumps(payload),
+                    'headers': json.dumps(head.get('header')),
+                    'created_at': get_current_datetime(),
+                    'type': type,
+                    'status': 0,
+                    'error_msg': json.dumps(status_code),
+                    'error_source': json.dumps(error_log)
+            }
+            log = base_coordinator.save_data_in_db(error_msg, 'noderetail_api_request_error_log', commit=True)
+            return Response(json.dumps(body), status, content_type='application/json')
     except Exception as e:
         return Response(json.dumps({'error': msg}), status, content_type='application/json')
 
