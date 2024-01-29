@@ -260,9 +260,9 @@ class OrderService:
 
     def order_fetch(self):
         identifier_id = self.params.get('order_id')  # posr.order_id
-        noderetail_storefront_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+        identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')
-        identifier_instance_id = self.params.get('noderetail_order_instance_id')
+        noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')
         order_status = self.params.get('order_status', '')
         created_at_start = self.params.get('order_created_at_date_start', '')
         created_at_end = self.params.get('order_created_at_date_end', '')
@@ -271,7 +271,19 @@ class OrderService:
         page_number = max(int(self.params.get('page_number', 1)), 1)
         page_size = int(self.params.get('page_size', 10))
 
-        entity_id = self.generate_api_logs(type='order_fetch')
+        log_params = {
+            'request': json.dumps(self.params),
+            'headers': json.dumps(self.headers),
+            'created_at': get_current_datetime(),
+            'type': 'order_fetch',
+            'identifier_id': identifier_id,
+            'identifier_instance_id': identifier_instance_id
+        }
+        try:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
         if page_size or page_number:
@@ -288,7 +300,7 @@ class OrderService:
             "api_action_status": "success",
             "order_fetch_request_id": None,
             "noderetail_account_user_id": noderetail_account_user_id,
-            "noderetail_order_instance_id": identifier_instance_id,
+            "noderetail_order_instance_id": noderetail_order_instance_id,
             "orders": []
         }
         if get_orders_data:
