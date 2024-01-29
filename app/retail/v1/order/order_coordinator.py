@@ -27,7 +27,7 @@ class OrderCoordinator(BaseCoordinator):
         query = '''select entity_id from plotch_customer_importer_data where alternate_customer_id = '{}' and customer_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
         return self.mysql_conn.query_db_one(query)
 
-    def fetch_order_details(self, identifier_id, identifier_instance_id, order_status, pagination_condition):
+    def fetch_order_details(self, identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition):
         query = ''' SELECT poid.*, poid.order_id AS noderetail_order_id, 
         rsi.ondc_order_id AS network_order_id, poid.alternate_customer_id AS noderetail_customer_id,
         rsi.ondc_order_id AS network_order_id, posr.order_id AS client_order_id, rsi.vendor_order_id AS fulfilment_id, 
@@ -39,6 +39,7 @@ class OrderCoordinator(BaseCoordinator):
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
         JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id 
         JOIN retail_shipment_status AS rss ON rsi.status = rss.entity_id
-        where posr.order_id = '{}' and posr.storefront_id = '{}' and posr.order_status = '{}' {}
-        '''.format(identifier_id, identifier_instance_id, order_status, pagination_condition)
+        where posr.order_id = '{}' and posr.storefront_id = '{}' and posr.order_status = '{}' {} {} {}
+        '''.format(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition, )
+        print(query)
         return self.mysql_conn.query_db(query)

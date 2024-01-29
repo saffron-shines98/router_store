@@ -18,6 +18,7 @@ class OrderService:
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
+            'custom_data': json.dumps(self.params.get('content_type')),
             'created_at': get_current_datetime(),
             'type': type,
             'identifier_id': self.params.get('order_id'),
@@ -264,28 +265,37 @@ class OrderService:
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')
         identifier_instance_id = self.params.get('noderetail_order_instance_id')
         order_status = self.params.get('order_status', '')
+        created_at_start = self.params.get('order_created_at_date_start', '')
+        created_at_end = self.params.get('order_created_at_date_end', '')
+        updated_at_start = self.params.get('order_updated_at_date_start', '')
+        updated_at_end = self.params.get('order_updated_at_date_end', '')
+        page_number = max(int(self.params.get('page_number', 1)), 1)
+        page_size = int(self.params.get('page_size', 10))
 
         entity_id = self.generate_api_logs(type='order_fetch')
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
-        page_number = max(int(self.params.get('page_number', 1)), 1)
-        page_size = int(self.params.get('page_size', 10))
         if page_size or page_number:
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
-
-        get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, pagination_condition)
+        date_created = ''
+        if created_at_start and created_at_end:
+            date_created = '''AND poid.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
+        date_updated = ''
+        if updated_at_start and updated_at_end:
+            date_updated = '''AND poid.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
+        get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition)
 
         response_payload = {
             "api_action_status": "success",
-            "order_fetch_request_id": "786986121",
+            "order_fetch_request_id": None,
             "noderetail_account_user_id": noderetail_account_user_id,
             "noderetail_order_instance_id": identifier_instance_id,
             "orders": []
         }
-        # print("get_orders_data:", get_orders_data)
+        if get_orders_data:
+            response_payload["order_fetch_request_id"] = get_orders_data[0].get("entity_id")
 
         for order_data in get_orders_data:
-            if isinstance(order_data, dict):
                 payload = {
                     "noderetail_order_id": order_data.get("noderetail_order_id"),
                     "network_order_id": order_data.get("ondc_network_order_id"), #
