@@ -388,4 +388,62 @@ class OrderService:
                 response_payload["orders"].append(payload)
         return response_payload
 
+    def order_status(self):
+        identifier_id = self.params.get('order_id')  # posr.order_id
+        noderetail_order_id = self.params.get('noderetail_order_id')  # poid.order_id
+        noderetail_account_user_id = self.params.get('noderetail_account_user_id')  # poid.user_instance_id
+        noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')  # poid.storefront_id
+        identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+
+        log_params = {
+            'request': json.dumps(self.params),
+            'headers': json.dumps(self.headers),
+            'created_at': get_current_datetime(),
+            'type': 'order_status',
+            'identifier_id': identifier_id,
+            'identifier_instance_id': identifier_instance_id
+        }
+        try:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+
+        order_status_data = self.coordinator.get_order_status(identifier_id, identifier_instance_id)
+
+        response_payload = []
+        if order_status_data:
+            for response in order_status_data:
+                payload = {
+                    "order_id": response.get('noderetail_order_id'),
+                    "noderetail_order_id": response.get('noderetail_order_id'),
+                    "is_order_created": response.get('is_order_created'),
+                    "noderetail_account_user_id": response.get('noderetail_account_user_id'),
+                    "noderetail_order_instance_id": noderetail_order_instance_id,
+                    "is_order_active": 1,
+                    "order_status": response.get('order_status'),
+                    "order_created_time": response.get('order_created_time'),
+                    "order_update_time": response.get('order_update_time'),
+                    "order_items_info": [
+                        {
+                            "item_order_id": response.get('item_order_id'),
+                            "item_id": response.get('item_id'),
+                            "noderetail_item_id": response.get('noderetail_item_id'),
+                            "fulfillments": [
+                                {
+                                    "fulfillment_id": response.get('fulfillment_id'),
+                                    "fulfillment_mode": response.get('fulfillment_mode'),
+                                    "fulfillment_status": response.get('fulfillment_status'),
+                                    "fulfillment_courier": response.get('fulfilment_courier'),
+                                    "fulfillment_tracking": response.get('fulfillment_tracking'),
+                                    "fulfillment_update_time": response.get('fulfillment_update_time')
+                                }
+                            ],
+                            "refund_status": response.get('refund_status')
+                        }
+                    ]
+                }
+                response_payload.append(payload)
+        return {"api_action_status": "success", "orders_status": response_payload}
 
