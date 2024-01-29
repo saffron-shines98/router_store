@@ -64,3 +64,9 @@ class OrderFetch(MethodView):
     def post(self, params, headers, *args, **kwargs):
         response = OrderService(params, headers).order_fetch()
         return render_success_response_with_body(response, msg='success')
+
+class OrderStatus(MethodView):
+    @validate_params(param_config=dict())
+    def post(self, params, headers, *args, **kwargs):
+        response = OrderService(params, headers).order_status()
+        return render_success_response_with_body(response, msg='success')
