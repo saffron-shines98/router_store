@@ -1,5 +1,5 @@
 import json
-from app.common_utils import get_current_datetime
+from app.common_utils import get_current_datetime, authenticate_user
 from app.exceptions import AuthMissing, AlreadyExists
 from app.retail.v1.vendor.vendor_coordinator import VendorCoordinator
 
@@ -47,7 +47,7 @@ class VendorService:
             if log_exist:
                 raise AlreadyExists('Provider already exists')
             log_id = self.generate_api_logs(type='vendor', identifier_id=provider_id, identifier_instance_id=user_instance_id)
-            self.authenticate_user()
+            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
             provider_profile = provider_details.get('provider_profile', {})
             certs = provider_details.get('certs', {})
             serviceability = provider_details.get('serviceability', [{}])[0]

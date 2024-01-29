@@ -1,7 +1,7 @@
 from config import Config
 from datetime import datetime
 import json
-from app.common_utils import get_current_datetime
+from app.common_utils import get_current_datetime, authenticate_user
 from app.exceptions import AuthMissing
 from app.retail.v1.product.product_coordinator import ProductCoordinator
 from app.common_utils import validate_jwt
@@ -31,6 +31,5 @@ class ProductService:
             self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'product_create_request_log_q')
         if not self.headers.get('Auth-Token', ''):
             raise AuthMissing('Auth token is missing')
-        payload = {'nodesso_id': self.headers.get('Nodesso-Id', ''),'auth_token': self.headers.get('Auth-Token', '')}
-        validate_jwt(payload)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
         return dict()
