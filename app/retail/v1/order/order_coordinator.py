@@ -40,6 +40,5 @@ class OrderCoordinator(BaseCoordinator):
         JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id 
         JOIN retail_shipment_status AS rss ON rsi.status = rss.entity_id
         where posr.order_id = '{}' and posr.storefront_id = '{}' and posr.order_status = '{}' {} {} {}
-        '''.format(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition, )
-        print(query)
+        '''.format(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition)
         return self.mysql_conn.query_db(query)

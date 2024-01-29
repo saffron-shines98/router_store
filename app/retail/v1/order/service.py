@@ -18,7 +18,6 @@ class OrderService:
         log_params = {
             'request': json.dumps(self.params),
             'headers': json.dumps(self.headers),
-            'custom_data': json.dumps(self.params.get('content_type')),
             'created_at': get_current_datetime(),
             'type': type,
             'identifier_id': self.params.get('order_id'),
@@ -298,11 +297,11 @@ class OrderService:
         for order_data in get_orders_data:
                 payload = {
                     "noderetail_order_id": order_data.get("noderetail_order_id"),
-                    "network_order_id": order_data.get("ondc_network_order_id"), #
+                    "network_order_id": order_data.get("ondc_network_order_id"),
                     "client_order_id": identifier_id,
                     "customer_info": {
                         "customer_id": order_data.get("alternate_customer_id"),
-                        "noderetail_customer_id": order_data.get("noderetail_customer_id"), #
+                        "noderetail_customer_id": order_data.get("noderetail_customer_id"),
                         "contact": {
                             "phone": order_data.get("phone"),
                             "email": order_data.get("email")
