@@ -395,20 +395,20 @@ class OrderService:
         noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')  # poid.storefront_id
         identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
 
-        # log_params = {
-        #     'request': json.dumps(self.params),
-        #     'headers': json.dumps(self.headers),
-        #     'created_at': get_current_datetime(),
-        #     'type': 'order_status',
-        #     'identifier_id': identifier_id,
-        #     'identifier_instance_id': identifier_instance_id
-        # }
-        # try:
-        #     entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
-        # except:
-        #     entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
-        #
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        log_params = {
+            'request': json.dumps(self.params),
+            'headers': json.dumps(self.headers),
+            'created_at': get_current_datetime(),
+            'type': 'order_status',
+            'identifier_id': identifier_id,
+            'identifier_instance_id': identifier_instance_id
+        }
+        try:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
         order_status_data = self.coordinator.get_order_status(identifier_id, identifier_instance_id)
 
