@@ -261,14 +261,13 @@ class OrderService:
     def order_update(self):
         identifier_id = self.params.get('order_id')
         identifier_instance_id = self.params.get('noderetail_order_instance_id')
-        print(identifier_id, "identifier_id AND ", identifier_instance_id, "identifier_instance_id")
 
         check_status = self.coordinator.check_order_status(identifier_id, identifier_instance_id)
         if check_status:
-            raise Exception("Order already processed. Cannot update.")
+            raise AlreadyExists('Order already processed. Cannot update.')
 
-        # log_id = self.generate_api_logs(type='order')
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        log_id = self.generate_api_logs(type='order')
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
@@ -277,7 +276,6 @@ class OrderService:
         order_info = self.params.get('order_info', {})
         order_items = order_info.get('order_items', [{}])[0]
         payment_info = self.params.get('payment_info', {})
-        print("279")
         request_params = {
             'user_instance_id': self.params.get('noderetail_account_user_id'),
             'order_id': self.params.get('order_id'),
@@ -319,37 +317,26 @@ class OrderService:
             'payment_mode': payment_info.get('payment_mode'),
             'payment_transaction_id': payment_info.get('payment_transaction_id'),
             'payment_status': payment_info.get('payment_status'),
-            # 'parent_id': log_id,
-            # 'storefront_id': self.params.get('noderetail_order_instance_id'),
-            'status': 0,
-            'created_at': get_current_datetime(),
-            'is_api': 1
+            'parent_id': log_id,
+            'storefront_id': self.params.get('noderetail_order_instance_id')
         }
-        print("before try")
         try:
-            print("Before update_data_in_db call")
             self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
                     {'col': 'storefront_id', 'val': identifier_instance_id}])
-        # except Exception as e:
-        #     print(f"Failed to update 'plotch_order_importer_data': {str(e)}")
-            print("After update_data_in_db call")
         except:
             self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
                     {'col': 'storefront_id', 'val': identifier_instance_id}])
 
-        # payment_transaction_id = payment_info.get('payment_transaction_id')
-        # params = {
-        #     'payment_mode': payment_info.get('payment_mode'),
-        #     'payment_transaction_id': payment_info.get('payment_transaction_id'),
-        #     'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0,
-        #     'created_at': get_current_datetime()
-        # }
-        # try:
-        #     self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
-        # # except Exception as e:
-        # #     print(f"Failed to update 'plotch_imported_order_transaction': {str(e)}")
-        # except:
-        #     self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+        payment_transaction_id = payment_info.get('payment_transaction_id')
+        params = {
+            'payment_mode': payment_info.get('payment_mode'),
+            'payment_transaction_id': payment_info.get('payment_transaction_id'),
+            'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0
+        }
+        try:
+            self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+        except:
+            self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
         return 'success'
 
 
