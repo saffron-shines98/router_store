@@ -185,7 +185,7 @@ class OrderService:
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             return 'success'
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
@@ -257,6 +257,101 @@ class OrderService:
         except:
             self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
         return 'success'
+
+    def order_update(self):
+        identifier_id = self.params.get('order_id')
+        identifier_instance_id = self.params.get('noderetail_order_instance_id')
+        print(identifier_id, "identifier_id AND ", identifier_instance_id, "identifier_instance_id")
+
+        check_status = self.coordinator.check_order_status(identifier_id, identifier_instance_id)
+        if check_status:
+            raise Exception("Order already processed. Cannot update.")
+
+        # log_id = self.generate_api_logs(type='order')
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        customer_info = self.params.get('customer_info', {})
+        billing_info = self.params.get('billing_info', {})
+        billing_location = billing_info.get('location', {})
+        shipping_info = self.params.get('shipping_info', {})
+        shipping_location = shipping_info.get('location', {})
+        order_info = self.params.get('order_info', {})
+        order_items = order_info.get('order_items', [{}])[0]
+        payment_info = self.params.get('payment_info', {})
+        print("279")
+        request_params = {
+            'user_instance_id': self.params.get('noderetail_account_user_id'),
+            'order_id': self.params.get('order_id'),
+            'alternate_customer_id': customer_info.get('customer_id'),
+            'phone': customer_info.get('contact', {}).get('phone'),
+            'email': customer_info.get('contact', {}).get('email'),
+            'billing_contact_number': billing_info.get('contact', {}).get('phone'),
+            'billing_email': billing_info.get('contact', {}).get('email'),
+            'billing_gps': billing_location.get('gps'),
+            'billing_building': clean_string(billing_location.get('building', '')),
+            'billing_street': clean_string(billing_location.get('street_name', '')),
+            'billing_city': billing_location.get('city'),
+            'billing_locality': clean_string(billing_location.get('locality', '')),
+            'billing_area_code': billing_location.get('area_code'),
+            'billing_state': billing_location.get('state'),
+            'billing_country': billing_location.get('country'),
+            'billing_label': billing_location.get('label'),
+            'shipping_contact_number': shipping_info.get('contact', {}).get('phone'),
+            'shipping_email': shipping_info.get('contact', {}).get('email'),
+            'shipping_gps': shipping_location.get('gps'),
+            'shipping_building': clean_string(shipping_location.get('building', '')),
+            'shipping_street': clean_string(shipping_location.get('street_name', '')),
+            'shipping_city': shipping_location.get('city'),
+            'shipping_locality': clean_string(shipping_location.get('locality', '')),
+            'shipping_area_code': shipping_location.get('area_code'),
+            'shipping_state': shipping_location.get('state'),
+            'shipping_country': shipping_location.get('country'),
+            'shipping_label': shipping_location.get('label'),
+            'item_id': order_items.get('id'),
+            'qty': order_items.get('qty'),
+            'price': order_items.get('price'),
+            'discount': abs(int(order_items.get('discount'))),
+            'taxes': order_items.get('taxes'),
+            'order_discount': abs(int(order_info.get('discount'))),
+            'packaging_charges': order_info.get('packaging_charges'),
+            'delivery_charges': order_info.get('delivery_charges'),
+            'other_charges': order_info.get('other_charges'),
+            'order_total': order_info.get('order_total'),
+            'payment_mode': payment_info.get('payment_mode'),
+            'payment_transaction_id': payment_info.get('payment_transaction_id'),
+            'payment_status': payment_info.get('payment_status'),
+            # 'parent_id': log_id,
+            # 'storefront_id': self.params.get('noderetail_order_instance_id'),
+            'status': 0,
+            'created_at': get_current_datetime(),
+            'is_api': 1
+        }
+        print("before try")
+        try:
+            print("Before update_data_in_db call")
+            self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
+                    {'col': 'storefront_id', 'val': identifier_instance_id}])
+        # except Exception as e:
+        #     print(f"Failed to update 'plotch_order_importer_data': {str(e)}")
+            print("After update_data_in_db call")
+        except:
+            self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
+                    {'col': 'storefront_id', 'val': identifier_instance_id}])
+
+        # payment_transaction_id = payment_info.get('payment_transaction_id')
+        # params = {
+        #     'payment_mode': payment_info.get('payment_mode'),
+        #     'payment_transaction_id': payment_info.get('payment_transaction_id'),
+        #     'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0,
+        #     'created_at': get_current_datetime()
+        # }
+        # try:
+        #     self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+        # # except Exception as e:
+        # #     print(f"Failed to update 'plotch_imported_order_transaction': {str(e)}")
+        # except:
+        #     self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+        return 'success'
+
 
     def order_fetch(self):
         identifier_id = self.params.get('order_id')  # posr.order_id
