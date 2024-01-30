@@ -149,105 +149,99 @@ class VendorService:
         #     'headers': json.dumps(self.headers),
         #     'created_at': get_current_datetime(),
         #     'type': 'provider_fetch',
-        #     'identifier_id': identifier_id,
-        #     # Add other relevant identifier information if needed
+        #     'identifier_id': identifier_id
         # }
         # try:
         #     entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
         # except:
         #     entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        # entity_id = self.generate_api_logs(type='fetch_vendor')
 
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
         get_providers_data = self.coordinator.fetch_provider_details(identifier_id)
-        if not isinstance(get_providers_data, list):
-            # Handle the case where get_providers_data is not a list (may need to adjust based on your data structure)
-            get_providers_data = [get_providers_data]
 
-        # Prepare response payload
-        response_payload = {
-            "api_action_status": "success",
-            "providers": []
-        }
+        response_payload = []
+
         for provider_data in get_providers_data:
             provider_payload = {
-                "provider_id": provider_data.get("provider_id"),
-                "agg_marketplace_id": provider_data.get("agg_marketplace_id"),
-                "status": provider_data.get("status"),
-                "create_account": provider_data.get("create_account"),
-                "agg_subscribe": provider_data.get("agg_subscribe"),
+                "provider_id": provider_data.get('provider_id', ''),
+                "agg_marketplace_id": str(provider_data.get('agg_marketplace_id', '')),
+                "status": provider_data.get('provider_status', ''),
+                "create_account": str(provider_data.get('create_account', '')),
+                "agg_subscribe": str(provider_data.get('agg_subscribe', '')),
                 "provider_profile": {
-                    "store_name": provider_data.get("store_name"),
-                    "brand_logo": provider_data.get("brand_logo"), #no
-                    "long_desc": provider_data.get("long_desc"),
-                    "short_desc": provider_data.get("short_desc"),
-                    "provider_contact_name": provider_data.get("provider_contact_name"), #no
-                    "provider_email": provider_data.get("provider_email"), #no
-                    "provider_phone": provider_data.get("provider_phone"), #no
-                    "customer_support_email": provider_data.get("customer_support_email"),
-                    "customer_support_phone": provider_data.get("customer_support_phone"),
-                    "store_images": provider_data.get("store_images", []) #no
+                    "store_name": provider_data.get('store_name', ''),
+                    "brand_logo": provider_data.get('logo', ''),
+                    "long_desc": provider_data.get('long_desc', ''),
+                    "short_desc": provider_data.get('short_desc', ''),
+                    "provider_contact_name": provider_data.get('name', ''),
+                    "provider_email": provider_data.get('email', ''),
+                    "provider_phone": provider_data.get('phone', ''),
+                    "customer_support_email": provider_data.get('customer_support_email', ''),
+                    "customer_support_phone": provider_data.get('customer_support_phone', ''),
+                    "store_images": [provider_data.get('store_image', '')],
                 },
                 "certs": {
-                    "fssai_license_num": provider_data.get("fssai_license_num"), #no
-                    "aadhaar_num": provider_data.get("aadhaar_num"),
-                    "pan_num": provider_data.get("pan_num"),
-                    "gst_num": provider_data.get("gst_num")
+                    "fssai_license_num": provider_data.get('fssai_licence_number', ''),
+                    "aadhaar_num": provider_data.get('aadhaar_num', ''),
+                    "pan_num": provider_data.get('pan_num', ''),
+                    "gst_num": provider_data.get('gst_num', ''),
                 },
                 "serviceability": [
                     {
-                        "category": provider_data.get("category"),
-                        "mode": provider_data.get("mode"), #no
-                        "radius": provider_data.get("radius"),
-                        "unit": provider_data.get("unit")
+                        "category": provider_data.get('category', ''),
+                        "mode": provider_data.get('serviceability', ''),
+                        "radius": str(provider_data.get('radius', '')),
+                        "unit": provider_data.get('unit', ''),
                     }
                 ],
                 "banks": [
                     {
-                        "beneficiary_name": provider_data.get("beneficiary_name"),
-                        "bank_name": provider_data.get("bank_name"),
-                        "bank_account_num": provider_data.get("bank_account_num"),
-                        "bank_ifsc_code": provider_data.get("bank_ifsc_code"),
-                        "bank_account_type": provider_data.get("bank_account_type")
+                        "beneficiary_name": provider_data.get('beneficary_name', ''),
+                        "bank_name": provider_data.get('bank_name', ''),
+                        "bank_account_num": provider_data.get('bank_account_num', ''),
+                        "bank_ifsc_code": provider_data.get('bank_ifsc_code', ''),
+                        "bank_account_type": provider_data.get('bank_account_type', ''),
                     }
                 ],
                 "locations": [
                     {
-                        "id": provider_data.get("id"), #no
-                        "gps": provider_data.get("gps"),
-                        "type": provider_data.get("type"), #no
+                        "id": str(provider_data.get('location_id', '')),
+                        "gps": provider_data.get('gps', ''),
+                        "type": "billing",
                         "address": {
-                            "city": provider_data.get("address").get("city"),
-                            "state": provider_data.get("address").get("state"),
-                            "street": provider_data.get("address").get("street"),
-                            "area_code": provider_data.get("address").get("area_code"),
-                            "locality": provider_data.get("address").get("locality")
+                            "city": provider_data.get('city', ''),
+                            "state": provider_data.get('state', ''),
+                            "street": provider_data.get('street', ''),
+                            "area_code": provider_data.get('area_code', ''),
+                            "locality": provider_data.get('locality', ''),
                         },
                         "schedule": {
-                            "open_days": location.get("schedule").get("open_days"), #no
+                            "open_days": provider_data.get('store_working_days', ''),
                             "open_hours": [
                                 {
-                                    "start_time": hour.get("start_time"), #no
-                                    "end_time": hour.get("end_time") #no
-                                } for hour in location.get("schedule").get("open_hours", [])
-                            ]
+                                    "start_time": provider_data.get('store_start_hour', ''),
+                                    "end_time": provider_data.get('store_close_hour', ''),
+                                }
+                            ],
                         }
-                    } for location in provider_data.get("locations", [])
+                    }
                 ],
                 "tnc": {
-                    "fulfillment_mode": provider_data.get("fulfillment_mode"),
-                    "available_on_cod": provider_data.get("available_on_cod"),
-                    "cancellable": provider_data.get("cancellable"),
-                    "rateable": provider_data.get("rateable"),
-                    "return_pickup": provider_data.get("return_pickup"),
-                    "return_window": provider_data.get("return_window"),
-                    "returnable": provider_data.get("returnable"),
-                    "time_to_ship": provider_data.get("time_to_ship"),
-                    "courier_control": provider_data.get("courier_control")
+                    "fulfillment_mode": provider_data.get('fulfillment_mode', ''),
+                    "available_on_cod": bool(provider_data.get('available_on_cod', '')),
+                    "cancellable": bool(provider_data.get('cancellable', '')),
+                    "rateable": str(provider_data.get('rateable', '')),
+                    "return_pickup": bool(provider_data.get('supports_return_pickup', '')),
+                    "return_window": provider_data.get('return_window', ''),
+                    "returnable": bool(provider_data.get('returnable', '')),
+                    "time_to_ship": provider_data.get('time_to_ship', ''),
+                    "courier_control": provider_data.get('courier_control', ''),
                 }
             }
-            response_payload["providers"].append(provider_payload)
+            response_payload.append(provider_payload)
+        return {"api_action_status": "success", "providers": response_payload}
 
-        return response_payload
 
         
