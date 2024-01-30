@@ -15,3 +15,7 @@ class VendorCoordinator(BaseCoordinator):
             return response.json().get('d')
         raise InvalidAuth('Invalid auth token.')
 
+    def fetch_provider_details(self, identifier_id):
+        query = '''select * from plotch_vendor_importer_data where provider_id ='{}' '''.format(identifier_id)
+        return self.mysql_conn.query_db_one(query)
+
