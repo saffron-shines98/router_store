@@ -185,7 +185,7 @@ class OrderService:
         log_id = self.generate_api_logs(type='order')
         if check_duplicacy:
             return 'success'
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
         billing_location = billing_info.get('location', {})
