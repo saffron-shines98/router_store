@@ -14,6 +14,7 @@ v1.add_url_rule(order_prefix + '/status/update', view_func=status_views.StatusUp
 v1.add_url_rule(order_prefix + '/create', view_func=status_views.OrderCreate.as_view('order_create'))
 v1.add_url_rule(order_prefix + '/update', view_func=status_views.OrderUpdate.as_view('order_update'))
 v1.add_url_rule(order_prefix + '/fetch', view_func=status_views.OrderFetch.as_view('order_fetch'))
+v1.add_url_rule(order_prefix + '/status', view_func=status_views.OrderStatus.as_view('order_status'))
 
 
 customer_prefix = '/customer'
