@@ -266,7 +266,7 @@ class OrderService:
         if check_status:
             raise AlreadyExists('Order already processed. Cannot update.')
 
-        log_id = self.generate_api_logs(type='order')
+        log_id = self.generate_api_logs(type='order_update')
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
@@ -307,9 +307,9 @@ class OrderService:
             'item_id': order_items.get('id'),
             'qty': order_items.get('qty'),
             'price': order_items.get('price'),
-            'discount': abs(int(order_items.get('discount',0))),
+            'discount': abs(int(order_items.get('discount') or 0)),
             'taxes': order_items.get('taxes'),
-            'order_discount': abs(int(order_info.get('discount',0))),
+            'order_discount': abs(int((order_info.get('discount') or 0))),
             'packaging_charges': order_info.get('packaging_charges',0),
             'delivery_charges': order_info.get('delivery_charges',0),
             'other_charges': order_info.get('other_charges',0),
@@ -341,7 +341,6 @@ class OrderService:
         except:
             self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
         return 'success'
-
 
     def order_fetch(self):
         identifier_id = self.params.get('order_id')  # posr.order_id
