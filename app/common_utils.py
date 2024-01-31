@@ -11,7 +11,7 @@ import base64
 import traceback
 import re
 from time import time
-import pysodium as nacl
+# import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
@@ -186,23 +186,43 @@ def clean_string(string):
         return None
     
 def header_verification_node_sso(headers):
-    try:
-        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
-    except:
-        nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
-    public_key = nodesso_details.get('public_key')
-    if not public_key:
-        raise InvalidAuth('Public key not found')
-    public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
-    public_key = public_key_start + public_key if not public_key.strip().startswith(public_key_start) else public_key
-    public_key = public_key + public_key_end if not public_key.strip().endswith(public_key_end) else public_key
-    public_key = public_key.replace('\n', '').replace('\t', '').replace(public_key_start, public_key_start + '\n').replace(public_key_end, '\n' + public_key_end).strip()
-    decoded_data = decrypt_jwt(public_key, headers.get('auth_token'))
-    challenge_string = decoded_data.get('challenge_string')
-    if nodesso_details.get('challenge_string') == challenge_string:
-        channel_id = challenge_string.split('.')[1]
-        return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
-    raise InvalidAuth('Invalid auth token.')
+    cache_key = 'nodesso_instance_{}'.format(headers.get('nodesso_id'))
+    nodesso_details_bytes = BaseCoordinator().get_data_from_cache(cache_key)
+    if nodesso_details_bytes:
+        nodesso_details = json.loads(nodesso_details_bytes)
+        public_key = nodesso_details.get('public_key')
+        if not public_key:
+            raise InvalidAuth('Public key not found')
+        public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
+        public_key = public_key_start + public_key if not public_key.strip().startswith(public_key_start) else public_key
+        public_key = public_key + public_key_end if not public_key.strip().endswith(public_key_end) else public_key
+        public_key = public_key.replace('\n', '').replace('\t', '').replace(public_key_start,public_key_start + '\n').replace(public_key_end, '\n' + public_key_end).strip()
+        decoded_data = decrypt_jwt(public_key, headers.get('auth_token'))
+        challenge_string = decoded_data.get('challenge_string')
+        if nodesso_details.get('challenge_string') == challenge_string:
+            channel_id = challenge_string.split('.')[1]
+            return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
+        raise InvalidAuth('Invalid auth token.')
+    else:
+        try:
+            nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
+        except:
+            nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
+        public_key = nodesso_details.get('public_key')
+        instance_detail ={'public_key':public_key,'configurations':nodesso_details.get('configurations'), 'challenge_string':nodesso_details.get('challenge_string')}
+        BaseCoordinator().set_data_in_cache(cache_key,instance_detail, 30)
+        if not public_key:
+            raise InvalidAuth('Public key not found')
+        public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
+        public_key = public_key_start + public_key if not public_key.strip().startswith(public_key_start) else public_key
+        public_key = public_key + public_key_end if not public_key.strip().endswith(public_key_end) else public_key
+        public_key = public_key.replace('\n', '').replace('\t', '').replace(public_key_start, public_key_start + '\n').replace(public_key_end, '\n' + public_key_end).strip()
+        decoded_data = decrypt_jwt(public_key, headers.get('auth_token'))
+        challenge_string = decoded_data.get('challenge_string')
+        if nodesso_details.get('challenge_string') == challenge_string:
+            channel_id = challenge_string.split('.')[1]
+            return {'payload': decoded_data, 'channel_id': channel_id}, 'Verified'
+        raise InvalidAuth('Invalid auth token.')
 
 def authenticate_user(jwt_token, nodesso_id):
     if not jwt_token:
