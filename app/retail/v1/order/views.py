@@ -32,6 +32,13 @@ class OrderCreate(MethodView):
         response = OrderService(params, headers).order_create()
         return render_success_response(response, msg='success')
 
+class OrderUpdate(MethodView):
+    @validate_params(param_config=dict())
+    def post(self, params, headers, *args, **kwargs):
+        response = OrderService(params, headers).order_update()
+        return render_success_response(response, msg='success')
+
+
 class OrderFetch(MethodView):
     param_config = {
         'type': 'object',
