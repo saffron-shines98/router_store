@@ -307,19 +307,22 @@ class OrderService:
             'item_id': order_items.get('id'),
             'qty': order_items.get('qty'),
             'price': order_items.get('price'),
-            'discount': abs(int(order_items.get('discount'))),
+            'discount': abs(int(order_items.get('discount',0))),
             'taxes': order_items.get('taxes'),
-            'order_discount': abs(int(order_info.get('discount'))),
-            'packaging_charges': order_info.get('packaging_charges'),
-            'delivery_charges': order_info.get('delivery_charges'),
-            'other_charges': order_info.get('other_charges'),
-            'order_total': order_info.get('order_total'),
+            'order_discount': abs(int(order_info.get('discount',0))),
+            'packaging_charges': order_info.get('packaging_charges',0),
+            'delivery_charges': order_info.get('delivery_charges',0),
+            'other_charges': order_info.get('other_charges',0),
+            'order_total': order_info.get('order_total',0),
             'payment_mode': payment_info.get('payment_mode'),
             'payment_transaction_id': payment_info.get('payment_transaction_id'),
             'payment_status': payment_info.get('payment_status'),
             'parent_id': log_id,
             'storefront_id': self.params.get('noderetail_order_instance_id')
         }
+        for key, value in dict(request_params).items():
+            if not value:
+                request_params.pop(key)
         try:
             self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
                     {'col': 'storefront_id', 'val': identifier_instance_id}])
