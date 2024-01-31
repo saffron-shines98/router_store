@@ -11,7 +11,7 @@ import base64
 import traceback
 import re
 from time import time
-# import pysodium as nacl
+import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
