@@ -11,7 +11,7 @@ import base64
 import traceback
 import re
 from time import time
-import pysodium as nacl
+# import pysodium as nacl
 from hashlib import blake2b
 from app.base_coordinator import BaseCoordinator,SSOCoordinator, SSOCoordinatorV1
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
@@ -210,7 +210,7 @@ def header_verification_node_sso(headers):
             nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
         public_key = nodesso_details.get('public_key')
         instance_detail ={'public_key':public_key,'configurations':nodesso_details.get('configurations'), 'challenge_string':nodesso_details.get('challenge_string')}
-        BaseCoordinator().set_data_in_cache(cache_key,instance_detail, 30)
+        BaseCoordinator().set_data_in_cache(cache_key,instance_detail, 86400)
         if not public_key:
             raise InvalidAuth('Public key not found')
         public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
