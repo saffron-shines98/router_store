@@ -198,7 +198,7 @@ def header_verification_node_sso(headers):
         except:
             nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
         instance_detail = {'public_key': nodesso_details.get('public_key'),'configurations': nodesso_details.get('configurations'),'challenge_string': nodesso_details.get('challenge_string')}
-        BaseCoordinator().set_data_in_cache(cache_key, instance_detail, 30)
+        BaseCoordinator().set_data_in_cache(cache_key, instance_detail, 86400)
 
     public_key = nodesso_details.get('public_key')
     if not public_key:
