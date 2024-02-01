@@ -195,11 +195,13 @@ def header_verification_node_sso(headers):
     if not nodesso_details:
         try:
             nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations', 'challenge_string'])
+            instance_detail = {'public_key': nodesso_details.get('public_key'), 'configurations': nodesso_details.get('configurations'),'challenge_string': nodesso_details.get('challenge_string')}
+            BaseCoordinator().set_data_in_cache(cache_key, instance_detail, 86400)
         except:
             nodesso_details = BaseCoordinator().get_single_data_from_node_sso_db('nodesso_registry', [{'col': 'nodesso_instance_id', 'val': headers.get('nodesso_id')}], ['public_key', 'configurations','challenge_string'])
+            instance_detail = {'public_key': nodesso_details.get('public_key'),'configurations': nodesso_details.get('configurations'),'challenge_string': nodesso_details.get('challenge_string')}
+            BaseCoordinator().set_data_in_cache(cache_key, instance_detail, 86400)
     public_key = nodesso_details.get('public_key')
-    instance_detail ={'public_key':public_key,'configurations':nodesso_details.get('configurations'), 'challenge_string':nodesso_details.get('challenge_string')}
-    BaseCoordinator().set_data_in_cache(cache_key,instance_detail, 86400)
     if not public_key:
         raise InvalidAuth('Public key not found')
     public_key_start, public_key_end = '-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----'
