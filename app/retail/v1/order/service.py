@@ -40,6 +40,7 @@ class OrderService:
         self.coordinator.validate_jwt(payload)
 
     def update_order_status(self):
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         log_params = {
             'request': json.dumps(self.params),
             'created_at': get_current_datetime(),
@@ -51,41 +52,12 @@ class OrderService:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         except:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
-        jwt_token = self.headers.get('Auth-Token')
-        nodesso_id = self.headers.get('Nodesso-Id')
-        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
-        format_to_check= "%d:%m:%Y %H:%M:%S"
         try:
-            parsed_date = datetime.strptime(self.params.get('status_created_time'), format_to_check)
-        except Exception as e:
-            raise InvalidDateFormat("Invalid Date format Please refer document")
-        output_format = "%Y:%m:%d %H:%M:%S"
-        converted_date_time = parsed_date.strftime(output_format)
-        order_payload = {
-            "order_id": self.params.get('order_id'),
-            "order_status": self.params.get('order_status'),
-            "fulfilment_status": self.params.get('fulfilment_status'),
-            "refund_status": self.params.get('refund_status'),
-            "status_created_time": converted_date_time,
-            "remark": self.params.get('remark'),
-            "created_at":get_current_datetime(),
-            "parent_id": entity,
-            "storefront_id": self.params.get('noderetail_storefront_id')
-        }
-        try:
-            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
+            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
         except:
-            entity_id = self.coordinator.save_data_in_db(order_payload, 'plotch_order_status_request')
-        try:
-            error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
-        except:
-            error_msg = self.coordinator.push_data_in_queue({"entity_id": entity_id}, 'plotch_order_status_request_q')
-        if error_msg:
-            try:
-                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request', [{'col': 'entity_id', 'val': entity_id}])
-            except:
-                self.coordinator.update_data_in_db({'status': 8, 'error_msg': error_msg}, 'plotch_order_status_request',[{'col': 'entity_id', 'val': entity_id}])
-        return order_payload
+            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
+
+        return 'success'
 
     def customer_status_create(self):
         try:
