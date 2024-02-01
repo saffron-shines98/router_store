@@ -40,6 +40,7 @@ class OrderService:
         self.coordinator.validate_jwt(payload)
 
     def update_order_status(self):
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         log_params = {
             'request': json.dumps(self.params),
             'created_at': get_current_datetime(),
@@ -47,17 +48,14 @@ class OrderService:
             'status': 0,
             'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
-        jwt_token = self.headers.get('Auth-Token')
-        nodesso_id = self.headers.get('Nodesso-Id')
-        authenticate_user_from_through_sso = authenticate_user(jwt_token, nodesso_id)
         try:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         except:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         try:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'plotch_order_status_request_q')
+            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
         except:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'plotch_order_status_request_q')
+            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
 
         return 'success'
 
