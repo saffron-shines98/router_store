@@ -143,14 +143,15 @@ class VendorService:
 
     def fetch_vendor(self):
         identifier_id = self.params.get('provider_id')
+        identifier_instance_id = self.params.get('noderetail_storefront_id')
         status = self.params.get('status')
         store_name = self.params.get('store_name')
         email = self.params.get('provider_email')
         phone = self.params.get('provider_phone')
         city = self.params.get('provider_city')
         state = self.params.get('provider_state')
-        # entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id)
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
 
         status_f = "AND rui.is_active = '{}' ".format(status) if status else ''
         storename = "AND rui.company_name = '{}' ".format(store_name) if store_name else ''
@@ -160,7 +161,6 @@ class VendorService:
         state_f = "AND rui.state = '{}' ".format(state) if state else ''
 
         user_instance_ids = self.coordinator.get_user_instance_id(self.params.get('noderetail_storefront_id'))
-        #user_instance_id.get('user_instance_id')
         get_providers_data = self.coordinator.fetch_provider_details(identifier_id, user_instance_ids, status_f, storename, email_f,
         phone_f, city_f, state_f)
 
@@ -172,10 +172,11 @@ class VendorService:
             except:
                 store_timing = []
             open_hours = []
-            for time in store_timing:
-                start_time, end_time = time.split('-')[0], time.split('-')[1]
-                open_hours.append({'start_time': start_time, 'end_time': end_time})
-            if provider_data.get('rui.account_id,') == provider_data.get('rhi.account_id,'):
+            if store_timing:
+                for time in store_timing:
+                    start_time, end_time = time.split('-')[0], time.split('-')[1]
+                    open_hours.append({'start_time': start_time, 'end_time': end_time})
+            if provider_data.get('rui.account_id') == provider_data.get('rhi.account_id'):
                 serviceability_mode = provider_data.get('serviceability_mode', '')
                 pickup_radius = str(provider_data.get('pickup_radius', ''))
             else:
@@ -184,9 +185,9 @@ class VendorService:
                 "provider_id": provider_data.get('seller_id'),
                 "agg_marketplace_id": provider_data.get(self.params.get('agg_marketplace_id')),
                 "status": provider_data.get('is_active'),
-                "create_account": 'True',
-                "agg_subscribe": str(provider_data.get('agg_subscribe')),
-                "provider_profile": { #rui
+                "create_account": True,
+                "agg_subscribe": True,
+                "provider_profile": {
                     "store_name": provider_data.get('company_name'),
                     "brand_logo": provider_data.get('marketplace_logo'),
                     "long_desc": provider_data.get('store_detail_description'),
@@ -198,9 +199,9 @@ class VendorService:
                     "customer_support_phone": provider_data.get('mobile'),
                     "store_images": [provider_data.get('image')],
                 },
-                "certs": { #rui
+                "certs": {
                     "fssai_license_num": provider_data.get('fssai'),
-                    "aadhaar_num": provider_data.get('aadhaar_num'), #not in both
+                    "aadhaar_num": provider_data.get('aadhaar_num'),
                     "pan_num": provider_data.get('pan_no'),
                     "gst_num": provider_data.get('gstin'),
                 },
@@ -209,7 +210,7 @@ class VendorService:
                         "category": provider_data.get('categories'),
                         "mode": serviceability_mode,
                         "radius": pickup_radius,
-                        "unit": provider_data.get('unit'), #not in both
+                        "unit": 'km',
                     }
                 ],
                 "banks": [
@@ -218,14 +219,14 @@ class VendorService:
                         "bank_name": provider_data.get('account_name'),
                         "bank_account_num": provider_data.get('account_no'),
                         "bank_ifsc_code": provider_data.get('ifsc_code'),
-                        "bank_account_type": provider_data.get('bank_account_type'), #not_in_psp
+                        "bank_account_type": provider_data.get('account_type'),
                     }
                 ],
                 "locations": [
                     {
                         "id": provider_data.get('alternate_location_id'),
                         "gps": provider_data.get('gps_coordinates'),
-                        "type": "Shipping",
+                        "type": "billing",
                         "address": {
                             "city": provider_data.get('shipping_city'),
                             "state": provider_data.get('shipping_state'),
@@ -240,7 +241,7 @@ class VendorService:
                     }
                 ],
                 "tnc": {
-                    "fulfillment_mode": provider_data.get('fulfillment_mode'), #not_in_both, blank
+                    "fulfillment_mode": tnc.get('fulfillment_mode'),
                     "available_on_cod": bool(tnc.get('available_on_cod')),
                     "cancellable": bool(tnc.get('cancellable')),
                     "rateable": bool(tnc.get('rateable')),
@@ -248,11 +249,8 @@ class VendorService:
                     "return_window": tnc.get('return_window'),
                     "returnable": bool(tnc.get('returnable')),
                     "time_to_ship": tnc.get('time_to_ship'),
-                    "courier_control": provider_data.get('courier_control'), #not_in_both blank
+                    "courier_control": tnc.get('courier_control'),
                 }
             }
             response_payload.append(provider_payload)
         return {"api_action_status": "success", "providers": response_payload}
-
-
-        
