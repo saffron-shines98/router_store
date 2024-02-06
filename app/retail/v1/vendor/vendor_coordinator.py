@@ -34,6 +34,5 @@ class VendorCoordinator(BaseCoordinator):
         JOIN crs_accounts as ca on rui.account_id = ca.account_id
         where rui.seller_id = '{}' AND rui.user_instance_id IN({}) {} {} {} {} {} {} '''.format(identifier_id, user_instance_ids_str, status_f, storename, email_f,
         phone_f, city_f, state_f)
-        print(query, "q")
         return self.mysql_conn.query_db(query)
 
