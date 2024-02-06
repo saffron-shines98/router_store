@@ -52,11 +52,6 @@ class OrderService:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
         except:
             entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
-        try:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
-        except:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
-
         return 'success'
 
     def customer_status_create(self):
