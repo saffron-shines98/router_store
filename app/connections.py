@@ -96,7 +96,7 @@ class RedisConnection(object):
         password = redis_config.get('password')
         if redis_host and redis_port:
             redis_connection = redis.Redis(
-                host=redis_host, port=redis_port)
+                host=redis_host, port=redis_port, password =password)
             return redis_connection
         
 

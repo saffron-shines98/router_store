@@ -27,6 +27,10 @@ class OrderCoordinator(BaseCoordinator):
         query = '''select entity_id from plotch_customer_importer_data where alternate_customer_id = '{}' and customer_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
         return self.mysql_conn.query_db_one(query)
 
+    def check_order_status(self, identifier, identifier_instance):
+        query = '''SELECT status FROM plotch_order_importer_data WHERE status = '1' AND order_id = '{}' and storefront_id = '{}' limit 1'''.format(identifier, identifier_instance)
+        return self.mysql_conn.query_db_one(query)
+
     def fetch_order_details(self, identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition):
         query = ''' SELECT poid.*, poid.order_id AS noderetail_order_id, 
         rsi.ondc_order_id AS network_order_id, poid.alternate_customer_id AS noderetail_customer_id,

@@ -11,6 +11,7 @@ class BaseCoordinator:
     def __init__(self, base_url=''):
         self.base_url = base_url
         self.mysql_conn = Config.MYSQL_CONN
+        self.redis_conn = Config.REDIS_CONN
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
         self.mysql_conn_node_sso = Config.MYSQL_CONN_NODE_SSO
         self.es_conn = Config.ES_CONN
@@ -121,6 +122,17 @@ class BaseCoordinator:
         list(map(lambda item: es_query.pop(item, None), ['from', 'collapse', 'sort']))
         es_utility = ESUtility(self.es_conn, index.lower(), 'products')
         return es_utility.get_complete_es_result_set(es_query)
+
+
+
+    def get_data_from_cache(self, cache_key):
+        return self.redis_conn.get(cache_key)
+
+
+    def set_data_in_cache(self, cache_key, data, cache_interval):
+        self.redis_conn.setex(cache_key, cache_interval, json.dumps(data))
+
+
 
 class SSOCoordinator(BaseCoordinator):
 
