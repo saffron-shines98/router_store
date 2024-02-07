@@ -25,6 +25,7 @@ v1.add_url_rule(customer_prefix + '/create', view_func=status_views.CustomerStat
 vendor_prefix = '/provider'
 v1.add_url_rule(vendor_prefix + '/create', view_func=vendor_view.VendorCreate.as_view('vendor_create'))
 v1.add_url_rule(vendor_prefix + '/fetch', view_func=vendor_view.VendorFetch.as_view('vendor_fetch'))
+v1.add_url_rule(vendor_prefix + '/status', view_func=vendor_view.VendorStatus.as_view('vendor_status'))
 
 product_prefix = '/product'
 v1.add_url_rule(product_prefix + '/create', view_func=product_view.CreateProduct.as_view('create_productr_request_log'))
