@@ -16,6 +16,12 @@ class VendorFetch(MethodView):
         response = VendorService(params, headers).fetch_vendor()
         return render_success_response_with_body(response, msg='success')
 
+class VendorStatus(MethodView):
+    @validate_params(param_config=dict())
+    def post(self, params, headers, *args, **kwargs):
+        response = VendorService(params, headers).vendor_status()
+        return render_success_response_with_body(response, msg='success')
+
 class VendorUpdate(MethodView):
     @validate_params(param_config=dict())
     def post(self, params, headers, *args, **kwargs):
