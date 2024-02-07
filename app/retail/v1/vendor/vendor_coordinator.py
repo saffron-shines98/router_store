@@ -36,3 +36,7 @@ class VendorCoordinator(BaseCoordinator):
         phone_f, city_f, state_f)
         return self.mysql_conn.query_db(query)
 
+    def check_provider_status(self, provider_id, noderetail_storefront_id):
+        query = '''SELECT status FROM plotch_vendor_importer_data WHERE status != 0 AND provider_id = '{}' 
+        and noderetail_storefront_id = '{}' '''.format(provider_id, noderetail_storefront_id)
+        return self.mysql_conn.query_db_one(query)
