@@ -66,7 +66,9 @@ class VendorService:
         city_f = "AND rui.city = '{}' ".format(city) if city else ''
         state_f = "AND rui.state = '{}' ".format(state) if state else ''
 
-        user_instance_ids = self.coordinator.get_user_instance_id(self.params.get('noderetail_storefront_id'))
+        user_instance_id = self.coordinator.get_user_instance_id(self.params.get('noderetail_storefront_id'))
+        user_instance_ids = [str(details.get('user_instance_id')) for details in user_instance_id]
+
         get_providers_data = self.coordinator.fetch_provider_details(identifier_id, user_instance_ids, status_f, storename, email_f,
         phone_f, city_f, state_f)
 
@@ -134,11 +136,11 @@ class VendorService:
                         "gps": provider_data.get('gps_coordinates'),
                         "type": "billing",
                         "address": {
-                            "city": provider_data.get('shipping_city'),
-                            "state": provider_data.get('shipping_state'),
-                            "street": provider_data.get('shipping_address'),
-                            "area_code": provider_data.get('shipping_pincode'),
-                            "locality": provider_data.get('shipping_address'),
+                            "city": provider_data.get('city'),
+                            "state": provider_data.get('state'),
+                            "street": provider_data.get('address'),
+                            "area_code": provider_data.get('pincode'),
+                            "locality": provider_data.get('locality'),
                         },
                         "schedule": {
                             "open_days": json.loads(provider_data.get('store_open_days')),
@@ -160,3 +162,40 @@ class VendorService:
             }
             response_payload.append(provider_payload)
         return {"api_action_status": "success", "providers": response_payload}
+
+    def vendor_status(self):
+        noderetail_storefront_id = self.params.get('noderetail_storefront_id')
+        for provider_details in self.params.get('providers'):
+            provider_id = provider_details.get('provider_id')
+            agg_marketplace_id = provider_details.get('agg_marketplace_id')
+
+            # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            entity_id = self.generate_api_logs(type='vendor_status', identifier_id=provider_id, identifier_instance_id=noderetail_storefront_id)
+
+            user_instance_id = self.coordinator.get_user_instance_id(self.params.get('noderetail_storefront_id'))
+            user_instance_ids = [str(details.get('user_instance_id')) for details in user_instance_id]
+
+            get_providers_data = self.coordinator.fetch_vender_status(provider_id, user_instance_ids)
+            num_items_live = self.coordinator.count_crs_products()
+
+            response_payload = []
+            for provider_data in get_providers_data:
+                provider_payload = {
+                    "provider_id": provider_data.get('seller_id'),
+                    "noderetail_provider_id": provider_data.get('seller_id'),
+                    "is_provider_subscribed": 1,
+                    "is_provider_active": True if provider_data.get('is_active') == 1 else False,
+                    "num_items_live": num_items_live[0]["num_items_live"] if num_items_live else None,
+                    "is_account_created": True,
+                    "seller_store_urls": [
+                        {
+                            "seller_store_url": '',
+                            "storefront_label": '',
+                            "storefront_type": ''
+                        }
+                    ],
+                    "noderetail_account_user_id": self.params.get('noderetail_account_user_id'),
+                    "aggregator_id": agg_marketplace_id
+                }
+                response_payload.append(provider_payload)
+            return {"api_action_status": "success", "providers_status": response_payload}
