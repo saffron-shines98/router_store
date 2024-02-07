@@ -132,7 +132,7 @@ class VendorService:
                 ],
                 "locations": [
                     {
-                        "id": provider_data.get('alternate_location_id'),
+                        "id": '',
                         "gps": provider_data.get('gps_coordinates'),
                         "type": "billing",
                         "address": {
@@ -140,7 +140,7 @@ class VendorService:
                             "state": provider_data.get('state'),
                             "street": provider_data.get('address'),
                             "area_code": provider_data.get('pincode'),
-                            "locality": provider_data.get('locality'),
+                            "locality": provider_data.get('address'),
                         },
                         "schedule": {
                             "open_days": json.loads(provider_data.get('store_open_days')),
@@ -169,7 +169,7 @@ class VendorService:
             provider_id = provider_details.get('provider_id')
             agg_marketplace_id = provider_details.get('agg_marketplace_id')
 
-            # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
             entity_id = self.generate_api_logs(type='vendor_status', identifier_id=provider_id, identifier_instance_id=noderetail_storefront_id)
 
             user_instance_id = self.coordinator.get_user_instance_id(self.params.get('noderetail_storefront_id'))

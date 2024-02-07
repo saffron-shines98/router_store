@@ -22,11 +22,11 @@ class VendorCoordinator(BaseCoordinator):
 
     def fetch_provider_details(self, identifier_id, user_instance_ids, status_f, storename, email_f, phone_f, city_f, state_f):
         query = '''select rui.seller_id, rui.is_active, rui.company_name, rui.email, rui.mobile, rui.pan_no, rui.gstin,
-        rui.gps_coordinates, rui.shipping_city, rui.shipping_state, rui.shipping_address, rui.shipping_pincode, rui.account_id,
+        rui.gps_coordinates, rui.city, rui.state, rui.address, rui.pincode, rui.account_id,
         rhi.marketplace_logo, rhi.store_detail_description, rhi.store_description, 
         rhi.store_open_days, rhi.store_timing, rhi.name, rhi.email, rhi.mobile, rhi.store_description,
         rhi.image, rhi.fssai, rhi.pan_no, rhi.gstin, rhi.categories, rhi.serviceability_mode, rhi.pickup_radius, rhi.other_params, rhi.account_id,
-        psp.account_name, psp.account_no, psp.ifsc_code, ca.account_type from retail_user_instance as rui
+        psp.contact_name, psp.account_name, psp.account_no, psp.ifsc_code, ca.account_type from retail_user_instance as rui
         JOIN retail_hub_instance as rhi on rui.seller_id = rhi.seller_id
         JOIN plotch_seller_profile as psp on rui.user_instance_id = psp.user_instance_id
         JOIN crs_accounts as ca on rui.account_id = ca.account_id
