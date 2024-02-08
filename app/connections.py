@@ -9,6 +9,20 @@ class SqlConnection(object):
     def __init__(self, db_config):
         self.db_config = db_config
 
+    @staticmethod
+    def parsed_db_result(db_data) -> dict:
+        if not db_data:
+            return {}
+        parsed_db_data = {}
+        for key, val in enumerate(db_data):
+            if isinstance(val, datetime):
+                parsed_db_data[key] = val.strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(val, str) and val == 'NULL':
+                parsed_db_data[key] = None
+            else:
+                parsed_db_data[key] = val
+        return parsed_db_data
+
     def get_connection(self):
         return pymysql.connect(**self.db_config)
 
@@ -30,7 +44,7 @@ class SqlConnection(object):
             except pymysql.Error as e:
                 raise e
             result = cursor.fetchone()
-            return self.parsed_db_result(result) if result else {}
+            return result
 
     def write_db(self, query, params=None) -> int:
         connection = self.get_connection()
@@ -49,20 +63,6 @@ class SqlConnection(object):
         self.connection = pymysql.connect(**self.db_config)
         self.cursor = self.connection.cursor(dictionary=True, buffered=True)
 
-
-    @staticmethod
-    def parsed_db_result(db_data) -> dict:
-        if not db_data:
-            return {}
-        parsed_db_data = {}
-        for key, val in enumerate(db_data):
-            if isinstance(val, datetime):
-                parsed_db_data[key] = val.strftime('%Y-%m-%d %H:%M:%S')
-            elif isinstance(val, str) and val == 'NULL':
-                parsed_db_data[key] = None
-            else:
-                parsed_db_data[key] = val
-        return parsed_db_data
 
 class RedisConnection(object):
     @staticmethod
