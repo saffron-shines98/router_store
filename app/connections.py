@@ -23,6 +23,10 @@ class SqlConnection(object):
                 parsed_db_data[key] = val
         return parsed_db_data
 
+    def reconnect_db(self):
+        self.connection = pymysql.connect(**self.db_config)
+        self.cursor = self.connection.cursor(dictionary=True, buffered=True)
+
     def get_connection(self):
         return pymysql.connect(**self.db_config)
 
@@ -59,9 +63,6 @@ class SqlConnection(object):
             finally:
                 connection.close()
 
-    def reconnect_db(self):
-        self.connection = pymysql.connect(**self.db_config)
-        self.cursor = self.connection.cursor(dictionary=True, buffered=True)
 
 
 class RedisConnection(object):
