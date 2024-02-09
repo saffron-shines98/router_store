@@ -14,13 +14,13 @@ class SqlConnection(object):
         if not db_data:
             return {}
         parsed_db_data = {}
-        for key, val in enumerate(db_data):
+        for key, val in db_data.items():
             if isinstance(val, datetime):
-                parsed_db_data[key] = val.strftime('%Y-%m-%d %H:%M:%S')
+                parsed_db_data.update({key: val.strftime('%Y-%m-%d %H:%M:%S')})
             elif isinstance(val, str) and val == 'NULL':
-                parsed_db_data[key] = None
+                parsed_db_data.update({key: None})
             else:
-                parsed_db_data[key] = val
+                parsed_db_data.update({key: val})
         return parsed_db_data
 
     def reconnect_db(self):
@@ -48,7 +48,9 @@ class SqlConnection(object):
             except pymysql.Error as e:
                 raise e
             result = cursor.fetchone()
-            return result
+            if not result:
+                return {}
+            return self.parsed_db_result(result) if parsed else result
 
     def write_db(self, query, params=None) -> int:
         connection = self.get_connection()
