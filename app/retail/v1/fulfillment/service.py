@@ -29,6 +29,6 @@ class FulfillmentService:
     def fulfillment_create(self):
         order_id = self.params.get('order_id')
         noderetail_storefront_id = self.params.get('noderetail_storefront_id')
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         log_id = self.generate_api_logs(type='fulfillment_create', identifier_id=order_id, identifier_instance_id=noderetail_storefront_id)
         return 'success'
