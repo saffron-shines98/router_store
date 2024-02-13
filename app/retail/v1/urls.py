@@ -5,6 +5,7 @@ from app.retail.v1.vendor import views as vendor_view
 from app.retail.v1.inventory import views as inventory_view
 from app.retail.v1.price import views as price_view
 from app.retail.v1.catalog import views as catalog_view
+from app.retail.v1.fulfillment import views as fulfillment_view
 
 v1 = Blueprint('v1', __name__)
 
@@ -15,6 +16,9 @@ v1.add_url_rule(order_prefix + '/create', view_func=status_views.OrderCreate.as_
 v1.add_url_rule(order_prefix + '/update', view_func=status_views.OrderUpdate.as_view('order_update'))
 v1.add_url_rule(order_prefix + '/fetch', view_func=status_views.OrderFetch.as_view('order_fetch'))
 v1.add_url_rule(order_prefix + '/status', view_func=status_views.OrderStatus.as_view('order_status'))
+
+fulfillment_prefix = '/fulfillment'
+v1.add_url_rule(fulfillment_prefix + '/create', view_func=fulfillment_view.FulfillmentCreate.as_view('fulfillment_create'))
 
 
 customer_prefix = '/customer'
