@@ -18,6 +18,7 @@ class FulfillmentService:
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
             'type': type,
+            'status': 0,
             'identifier_id': identifier_id,
             'identifier_instance_id': identifier_instance_id
         }
@@ -31,8 +32,4 @@ class FulfillmentService:
         noderetail_storefront_id = self.params.get('noderetail_storefront_id')
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         log_id = self.generate_api_logs(type='fulfillment_create', identifier_id=order_id, identifier_instance_id=noderetail_storefront_id)
-        try:
-            self.coordinator.push_data_in_queue({'entity_id': log_id}, 'noderetail_fulfillment_create_q')
-        except:
-            self.coordinator.push_data_in_queue({'entity_id': log_id}, 'noderetail_fulfillment_create_q')
         return 'success'
