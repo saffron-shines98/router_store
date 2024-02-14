@@ -19,6 +19,7 @@ v1.add_url_rule(order_prefix + '/status', view_func=status_views.OrderStatus.as_
 
 fulfillment_prefix = '/fulfillment'
 v1.add_url_rule(fulfillment_prefix + '/create', view_func=fulfillment_view.FulfillmentCreate.as_view('fulfillment_create'))
+v1.add_url_rule(fulfillment_prefix + '/status', view_func=fulfillment_view.FulfillmentStatus.as_view('fulfillment_status'))
 
 
 customer_prefix = '/customer'

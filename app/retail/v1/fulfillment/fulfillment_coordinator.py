@@ -14,3 +14,10 @@ class FulfillmentCoordinator(BaseCoordinator):
         if response.status_code == 200:
             return response.json().get('d')
         raise InvalidAuth('Invalid auth token.')
+
+    def get_fulfillment_status(self, order_id, noderetail_storefront_id):
+        query = '''SELECT nfi.fulfillment_id, nfi.fulfillment_mode, nfi.fulfillment_status, nfi.fulfillment_courier,
+        nfi.fulfillment_tracking, nfi.fulfillment_update_time, nfi.created_at FROM noderetail_fulfillment_item as nfi 
+        JOIN noderetail_fulfillment as nf on nf.entity_id = nfi.parent_id 
+        WHERE nf.order_id = '{}' AND nf.noderetail_storefront_id = '{}' order by nfi.created_at desc limit 1'''.format(order_id, noderetail_storefront_id)
+        return self.mysql_conn.query_db(query)
