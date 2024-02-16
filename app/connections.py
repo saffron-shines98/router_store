@@ -4,9 +4,14 @@ import mysql.connector as MySQLdb
 import redis
 import pika
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+import pymysql
+from dbutils.pooled_db import PooledDB
+
 
 
 class SqlConnection(object):
+    active_connections = 0
+    total_write_connections = 0
 
     def __init__(self, db_config):
         self.db_config = db_config
@@ -96,9 +101,9 @@ class RedisConnection(object):
         password = redis_config.get('password')
         if redis_host and redis_port:
             redis_connection = redis.Redis(
-                host=redis_host, port=redis_port, password =password)
+                host=redis_host, port=redis_port, password=password)
             return redis_connection
-        
+
 
 class RabbitMQConnection(object):
 
@@ -224,7 +229,7 @@ class ESUtility:
         self.es_handle = es_handle
         self.es_index = index
         self.es_doctype = '_doc' if index in ['plotch_products_p4p76erzw4', 'plotch_products_j1uksul7pz',
-            'plotch_products_zfykjvf9j0', 'plotch_products_qpygsziwtp'] else doctype
+                                              'plotch_products_zfykjvf9j0', 'plotch_products_qpygsziwtp'] else doctype
 
     @staticmethod
     def _get_parsed_es_data(es_data) -> list:
@@ -232,15 +237,16 @@ class ESUtility:
 
     def get_total_rows_count(self, es_query):
         es_count = self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query)
-        return self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query) 
-    
+        return self.es_handle.count(index=self.es_index, doc_type=self.es_doctype, body=es_query)
+
     def _get_parsed_query_data(self, query) -> list:
         es_data = self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, body=query)
         return self._get_parsed_es_data(es_data)
 
     def _get_data_by_scrolling(self, query) -> list:
         response_data = list()
-        es_data = self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, scroll='2m', size=1000, body=query)
+        es_data = self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, scroll='2m', size=1000,
+                                        body=query)
         sid = es_data['_scroll_id']
         scroll_size = es_data['hits']['total']
         response_data.extend(self._get_parsed_es_data(es_data))
@@ -265,3 +271,75 @@ class ESUtility:
         if fields:
             query.update({'_source': fields})
         return self.es_handle.search(index=self.es_index, doc_type=self.es_doctype, body=query)
+
+class SqlConnectionpooling(object):
+    active_connections = 0
+    total_write_connections = 0
+
+    def __init__(self, db_config):
+        self.db_config = db_config
+        self.connection_pool = PooledDB(
+            creator=pymysql,
+            mincached=5,
+            maxcached=400,
+            maxconnections=400,
+            **self.db_config
+        )
+
+    def get_connection(self):
+        connection = self.connection_pool.connection()
+        SqlConnection.active_connections += 1
+        return connection
+
+    def query_db_pool(self, query, params=None) -> list:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            result = cursor.fetchall()
+            return list(map(lambda row: self.parsed_db_result(row), result)) if result else list()
+        finally:
+            cursor.close()
+            connection.close()
+            SqlConnection.active_connections -= 1
+
+    def query_db_one_pool(self, query, params=None, parsed=True) -> dict:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            result = cursor.fetchone()
+            if not result:
+                return dict()
+            return self.parsed_db_result(result) if parsed else result
+        finally:
+            cursor.close()
+            connection.close()
+
+    def write_db_pool(self, query, params=None) -> int:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            SqlConnection.total_write_connections += 1
+            return cursor.lastrowid
+        finally:
+            cursor.close()
+            connection.close()
+
+    @staticmethod
+    def parsed_db_result(db_data) -> dict:
+        if not db_data:
+            return {}
+        parsed_db_data = {}
+        for key, val in db_data.items():
+            if isinstance(val, datetime):
+                parsed_db_data.update({key: val.strftime('%Y-%m-%d %H:%M:%S')})
+            elif isinstance(val, str) and val == 'NULL':
+                parsed_db_data.update({key: None})
+            else:
+                parsed_db_data.update({key: val})
+        return parsed_db_data

@@ -49,9 +49,9 @@ class OrderService:
             'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
         try:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_status_request_logs')
         except:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_status_request_logs')
         return 'success'
 
     def customer_status_create(self):
