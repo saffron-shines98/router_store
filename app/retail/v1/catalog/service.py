@@ -21,6 +21,20 @@ class CatalogService:
         else:
             return Config.IMAGE_BASE_URL_FOR_CDN_AZ + image_params
 
+    def generate_api_logs(self, type=None, identifier_id=None, identifier_instance_id=None):
+        log_params = {
+            'request': json.dumps(self.params),
+            'headers': json.dumps(self.headers),
+            'created_at': get_current_datetime(),
+            'type': type,
+            'identifier_id': identifier_id,
+            'identifier_instance_id': identifier_instance_id
+        }
+        try:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+        except:
+            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+
     def extract_image_from_params(self, product_data, other_params):
         image_list = list()
         if product_data.get('main_image') or other_params.get('main_image'):
@@ -280,4 +294,48 @@ class CatalogService:
         joined_result = self.coordinator.get_document_count_from_es(total_product_es_query, 'plotch_products_' + catalog_id)
         catalog_count_data =joined_result.get('aggregations', {}).get('type_count', {}).get('value', 0)
         return {'catalog_count_data': catalog_count_data}
-    
+
+    def category_fetch(self):
+        noderetail_account_user_id = self.params.get('noderetail_account_user_id')
+        ondc_domain = self.params.get('category_domain')
+        page_number = max(int(self.params.get('page_number', 1)), 1)
+        page_size = int(self.params.get('page_size', 10))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # entity_id = self.generate_api_logs(type='category_fetch', identifier_id=noderetail_account_user_id,
+        #                                    identifier_instance_id=noderetail_account_user_id)
+        if page_size or page_number:
+            pagination_cond = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
+
+        category_details = self.coordinator.get_catgory_details(ondc_domain, pagination_cond)
+        category_ids = [details.get('category_id') for details in category_details]
+        attribute_set_ids = self.coordinator.get_source_node(category_ids)
+        attribute_set_values = [details.get('source_node') for details in attribute_set_ids]
+        attribute_details = self.coordinator.attribute_details(attribute_set_values)
+        response_payload = []
+        for details in category_details:
+            payload = {
+                "category_name": details.get('name'),
+                "noderetail_category_id": details.get('category_id'),
+                "category_domain": details.get('ondc_domain'),
+                "category_level": details.get('level'),
+                "parent_categories": [
+                    {
+                        "parent_category_name": details.get(''),
+                        "parent_category_level": details.get('')
+                    }
+                ],
+                "attributes": []
+            }
+            for attribute in attribute_details:
+                attribute_name = attribute.get('attribute_name')
+                attribute_value = attribute.get('attribute_value')
+
+                attribute_payload = {
+                    "attribute_name": attribute_name,
+                    "Attribute_value": attribute_value,
+                    "Mandatory_flag": details.get('')
+                }
+                payload["attributes"].append(attribute_payload)
+            response_payload.append(payload)
+        return {"api_action_status": "success", "total_categories": str(len(category_details)),
+                "categories": response_payload}

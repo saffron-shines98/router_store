@@ -16,3 +16,21 @@ class CatalogCoordinator(BaseCoordinator):
                     order by id desc limit {} offset {}""".format(catalog_id, condition_str, limit, int(limit)*(int(current_page)-1))
         return self.mysql_conn.query_db(query=query)
 
+    def get_catgory_details(self, ondc_domain, pagination_cond):
+        query = '''SELECT cc.name, cc.category_id, cc.ondc_domain, cc.level from crs_category cc
+        where ondc_domain = '{}' {} '''.format(ondc_domain, pagination_cond)
+        print(query)
+        return self.mysql_conn.query_db(query)
+
+    def get_source_node(self, category_ids):
+        query = '''SELECT source_node FROM plotch_linkage WHERE target_node IN (157599) '''.format(str(category_ids)[1:-1])
+        print(query)
+        return self.mysql_conn.query_db(query)
+
+    def attribute_details(self, attribute_set_values):
+        query = '''SELECT m.attribute_id, m.attribute_name, m.attribute_value FROM plotch_attribute_sets_details d 
+        JOIN plotch_product_attribute_master m ON m.attribute_id = d.attribute_id AND m.status = 1 LEFT 
+        JOIN plotch_product_attribute_value ppav ON m.attribute_id = ppav.attribute_id 
+        WHERE d.attribute_set_id IN ({}) '''.format(str(attribute_set_values)[1:-1])
+        print(query)
+        return self.mysql_conn.query_db(query)

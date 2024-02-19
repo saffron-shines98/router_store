@@ -43,3 +43,9 @@ class FetchCatalogCount(MethodView):
     def post(self, params, headers, *args, **kwargs):
         response = CatalogService(params, headers).fetch_catalog_count()
         return render_success_response_with_body(response, msg='Fetch Catalog Product Count Successfully')
+
+class FetchCategory(MethodView):
+    @validate_params(param_config=dict())
+    def post(self, params, headers, *args, **kwargs):
+        response = CatalogService(params, headers).category_fetch()
+        return render_success_response_with_body(response, msg='success')
