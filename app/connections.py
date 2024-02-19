@@ -281,8 +281,8 @@ class SqlConnectionpooling(object):
         self.connection_pool = PooledDB(
             creator=pymysql,
             mincached=5,
-            maxcached=400,
-            maxconnections=400,
+            maxcached=100,
+            maxconnections=100,
             **self.db_config
         )
 
