@@ -33,6 +33,7 @@ v1.add_url_rule(vendor_prefix + '/status', view_func=vendor_view.VendorStatus.as
 
 product_prefix = '/product'
 v1.add_url_rule(product_prefix + '/create', view_func=product_view.CreateProduct.as_view('create_productr_request_log'))
+v1.add_url_rule(product_prefix + '/status', view_func=product_view.ProductStatus.as_view('product_status'))
 
 inventory_prefix = '/inventory'
 v1.add_url_rule(inventory_prefix + '/update', view_func=inventory_view.InventoryUpdate.as_view('inventory_updates'))
