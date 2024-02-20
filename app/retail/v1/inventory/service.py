@@ -23,9 +23,9 @@ class InventoryService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
