@@ -311,9 +311,12 @@ class SqlConnectionpooling(object):
             cursor.execute(query, params)
             connection.commit()
             result = cursor.fetchone()
-            if not result:
+            if result is None:
                 return dict()
-            return self.parsed_db_result(result) if parsed else result
+            if parsed:
+                return self.parsed_db_result(dict(zip([x[0] for x in cursor.description], result)))
+            else:
+                return dict(zip([x[0] for x in cursor.description], result))
         finally:
             cursor.close()
             connection.close()

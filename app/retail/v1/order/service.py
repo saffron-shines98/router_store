@@ -77,9 +77,9 @@ class OrderService:
             'identifier_instance_id':identifier_instance_id
         }
         try:
-            entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity= self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
@@ -136,9 +136,9 @@ class OrderService:
             'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
         try:
-            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+            self.coordinator.save_data_in_db_pool(customer_status_payload, 'plotch_customer_importer_data')
         except:
-            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+            self.coordinator.save_data_in_db_pool(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
 
     

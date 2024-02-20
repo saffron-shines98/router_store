@@ -17,7 +17,7 @@ class OrderCoordinator(BaseCoordinator):
 
     def get_account_id(self, customer_instance):
         query = '''select account_id from retail_customer where customer_instance = '{}' limit 1'''.format(customer_instance)
-        return self.mysql_conn.query_db_one(query)
+        return self.mysql_conn_pool.query_db_one_pool(query)
 
     def check_order_duplicacy(self, identifier, identifier_instance):
         query = '''select entity_id from plotch_order_importer_data where order_id = '{}' and storefront_id = '{}' limit 1'''.format(identifier, identifier_instance)
@@ -25,7 +25,7 @@ class OrderCoordinator(BaseCoordinator):
 
     def customer_check_duplicacy(self, identifier_instance, identifier):
         query = '''select entity_id from plotch_customer_importer_data where alternate_customer_id = '{}' and customer_instance_id = '{}' limit 1'''.format(identifier, identifier_instance)
-        return self.mysql_conn.query_db_one(query)
+        return self.mysql_conn_pool.query_db_one_pool(query)
 
     def check_order_status(self, identifier, identifier_instance):
         query = '''SELECT status FROM plotch_order_importer_data WHERE status = '1' AND order_id = '{}' and storefront_id = '{}' limit 1'''.format(identifier, identifier_instance)
