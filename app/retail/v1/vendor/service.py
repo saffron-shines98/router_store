@@ -24,19 +24,6 @@ class VendorService:
         except:
             return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
 
-    def generate_error_log(self, type=None, error_msg=None):
-        log_params = {
-            'request': json.dumps(self.params),
-            'headers': json.dumps(self.headers),
-            'created_at': get_current_datetime(),
-            'type': type,
-            'error_msg': error_msg
-        }
-        try:
-            self.coordinator.save_data_in_db(log_params, 'noderetail_api_request_error_log')
-        except:
-            self.coordinator.save_data_in_db(log_params, 'noderetail_api_request_error_log')
-
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
         nodesso_id = self.headers.get('Nodesso-Id')
