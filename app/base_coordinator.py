@@ -11,6 +11,7 @@ class BaseCoordinator:
     def __init__(self, base_url=''):
         self.base_url = base_url
         self.mysql_conn = Config.MYSQL_CONN
+        self.mysql_conn_pool = Config.MYSQL_CONN_POOLING
         self.redis_conn = Config.REDIS_CONN
         self.rabbitmq_conn = Config.RABBITMQ_CONNECTION
         self.mysql_conn_node_sso = Config.MYSQL_CONN_NODE_SSO
@@ -38,6 +39,14 @@ class BaseCoordinator:
             return self.mysql_conn.write_db(query, tuple(db_params.values()))
         else:
             return self.mysql_conn.cursor.execute(query, tuple(db_params.values()))
+
+    def save_data_in_db_pool(self, db_params: dict, table_name: str, commit=True) -> int:
+        query = "insert into " + table_name + " (" + ",".join(db_params.keys()) + ") VALUES (" + ",".join(
+            ['%s' for x in db_params.values()]) + ")"
+        if commit:
+            return self.mysql_conn_pool.write_db_pool(query, tuple(db_params.values()))
+        else:
+            return self.mysql_conn_pool.cursor.execute(query, tuple(db_params.values()))
         
     def update_data_in_db(self, db_params: dict, table_name: str, condition_params: list, commit=True) -> int:
         update_values = [str(key) + " = '" + str(val) + "'" for key, val in db_params.items()]
