@@ -40,13 +40,13 @@ class InventoryService:
 
     def update_inventory(self):
         entity_id = self.generate_api_logs('inventory', self.params.get('item_id'), self.params.get('storefront_instance_id'))
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         self.params['log_id'] = entity_id
         try:
-           inventory_entity_id = self.coordinator.save_data_in_db({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
+           inventory_entity_id = self.coordinator.save_data_in_db_pool({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
         'qty': self.params.get('qty'), 'storefront_id': self.params.get('storefront_instance_id'), 'created_at': get_current_datetime()}, 'plotch_inventory_importer_data')
         except:
-            inventory_entity_id = self.coordinator.save_data_in_db({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
+            inventory_entity_id = self.coordinator.save_data_in_db_pool({'status': 0, 'parent_id': entity_id, 'item_id': self.params.get('item_id'),
             'qty': self.params.get('qty'), 'storefront_id': self.params.get('storefront_instance_id'), 'created_at': get_current_datetime()}, 'plotch_inventory_importer_data')
         self.params['inventory_entity_id'] = inventory_entity_id
         try:
@@ -55,11 +55,11 @@ class InventoryService:
             error_msg = self.coordinator.push_data_in_queue({'inventory_entity_id': inventory_entity_id}, 'noderetail_inventory_update_sync_q')
         if error_msg:
             try:
-               self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+               self.coordinator.update_data_in_db_pool({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
             except:
-                self.coordinator.update_data_in_db({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
+                self.coordinator.update_data_in_db_pool({'status': 8, 'error_log': error_msg}, 'plotch_noderetailapi_request_logs', [{'col': 'entity_id', 'val': entity_id}])
             try:
-                self.coordinator.update_data_in_db({'status': 8}, 'plotch_inventory_importer_data', [{'col': 'entity_id', 'val': inventory_entity_id}])
+                self.coordinator.update_data_in_db_pool({'status': 8}, 'plotch_inventory_importer_data', [{'col': 'entity_id', 'val': inventory_entity_id}])
             except:
-                self.coordinator.update_data_in_db({'status': 8}, 'plotch_inventory_importer_data', [{'col': 'entity_id', 'val': inventory_entity_id}])
+                self.coordinator.update_data_in_db_pool({'status': 8}, 'plotch_inventory_importer_data', [{'col': 'entity_id', 'val': inventory_entity_id}])
         return {}
