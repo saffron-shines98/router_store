@@ -67,8 +67,6 @@ class SqlConnection(object):
                 self.cursor.execute(query)
         self.connection.commit()
         result = self.cursor.fetchone()
-        print(type(result))
-        print(result)
         if not result:
             return dict()
         return self.parsed_db_result(result) if parsed else result
