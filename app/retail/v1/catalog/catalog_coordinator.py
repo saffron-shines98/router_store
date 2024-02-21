@@ -8,11 +8,12 @@ class CatalogCoordinator(BaseCoordinator):
         super(CatalogCoordinator, self).__init__()
         self.sso_coordinator = SSOCoordinator()
         self.mysql_conn = Config.MYSQL_CONN
+        self.mysql_conn_pool = Config.MYSQL_CONN_POOLING
     
     def fetch_catalog_data(self, catalog_id, condition_str, limit, current_page):
         query = """select cp.*, pisi.qty as inventory_qty from crs_products cp 
                     LEFT JOIN plotch_inventory_summary_item pisi ON cp.product_id=pisi.product_id 
                     where cp.catalog_id='{}' {} 
                     order by id desc limit {} offset {}""".format(catalog_id, condition_str, limit, int(limit)*(int(current_page)-1))
-        return self.mysql_conn.query_db(query=query)
+        return self.mysql_conn_pool.query_db_pool(query=query)
 

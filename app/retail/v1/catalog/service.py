@@ -44,18 +44,18 @@ class CatalogService:
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         plotch_instance_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}]
         try:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',plotch_instance_object)
+            plotch_instance = self.coordinator.get_single_data_from_db_pool('plotch_instance',plotch_instance_object)
         except:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',plotch_instance_object)
+            plotch_instance = self.coordinator.get_single_data_from_db_pool('plotch_instance',plotch_instance_object)
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
         except :
             catalog = ""
         try:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+            crs_catalog = self.coordinator.get_single_data_from_db_pool('crs_catalog', [{'col':'id', 'val': catalog}])
         except:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', [{'col':'id', 'val': catalog}])
+            crs_catalog = self.coordinator.get_single_data_from_db_pool('crs_catalog', [{'col':'id', 'val': catalog}])
         catalog_id = crs_catalog.get('catalog_id')
         condition_str = ''
         if self.params.get('noderetail_provider_id'):
@@ -71,9 +71,9 @@ class CatalogService:
         if self.params.get('noderetail_agg_id'):
             agg_id_object = [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}]
             try:
-                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance',agg_id_object , ['vendor_id'])
+                retail_user_instance_data = self.coordinator.get_single_data_from_db_pool('retail_user_instance',agg_id_object , ['vendor_id'])
             except:
-                retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance',agg_id_object, ['vendor_id'])
+                retail_user_instance_data = self.coordinator.get_single_data_from_db_pool('retail_user_instance',agg_id_object, ['vendor_id'])
             if retail_user_instance_data:
                 condition_str += ''' and cp.vendor_id = "{}" '''.format(retail_user_instance_data.get('vendor_id', ''))
         noderetail_catalog_id = ''
@@ -81,7 +81,7 @@ class CatalogService:
             noderetail_catalog_id = catalog_id
         joined_result = self.coordinator.fetch_catalog_data(catalog_id, condition_str, self.params.get('page_size'), self.params.get('page_number'))
         items = []
-        domain_details = self.coordinator.get_single_data_from_db('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
+        domain_details = self.coordinator.get_single_data_from_db_pool('plotch_domains', [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}], ['primary_domain'])
         for product_data in joined_result:
             try:
                 other_params = json.loads(product_data.get('other_params'), strict=False)
@@ -150,9 +150,9 @@ class CatalogService:
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         instance_common_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id')}, {'col':'instance_type_id', 'val': 46}]
         try:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',instance_common_object)
+            plotch_instance = self.coordinator.get_single_data_from_db_pool('plotch_instance',instance_common_object)
         except:
-            plotch_instance = self.coordinator.get_single_data_from_db('plotch_instance',instance_common_object)
+            plotch_instance = self.coordinator.get_single_data_from_db_pool('plotch_instance',instance_common_object)
         instance_details = plotch_instance.get('instance_details')
         try: 
             catalog = json.loads(instance_details).get('catalog')
@@ -162,9 +162,9 @@ class CatalogService:
             instance_details = dict()
         catalog_common_object = [{'col':'id', 'val': catalog}]
         try:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', catalog_common_object)
+            crs_catalog = self.coordinator.get_single_data_from_db_pool('crs_catalog', catalog_common_object)
         except:
-            crs_catalog = self.coordinator.get_single_data_from_db('crs_catalog', catalog_common_object)
+            crs_catalog = self.coordinator.get_single_data_from_db_pool('crs_catalog', catalog_common_object)
         catalog_id = crs_catalog.get('catalog_id')
         noderetail_catalog_id = ''
         if catalog_id and self.params.get('noderetail_catalog_id'):
@@ -174,9 +174,9 @@ class CatalogService:
         joined_result = self.coordinator.get_parsed_data_from_es(final_catalog_fetch_query, 'plotch_products_' + catalog_id, Config.CATALOG_FETCH_FIELDS)
         domain_common_object = [{'col':'instance_id', 'val': self.params.get('noderetail_storefront_id','')}]
         try:
-            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', domain_common_object, ['primary_domain'])
+            domain_details = self.coordinator.get_single_data_from_db_pool('plotch_domains', domain_common_object, ['primary_domain'])
         except:
-            domain_details = self.coordinator.get_single_data_from_db('plotch_domains', domain_common_object, ['primary_domain'])
+            domain_details = self.coordinator.get_single_data_from_db_pool('plotch_domains', domain_common_object, ['primary_domain'])
         for product_data in joined_result:
             images = self.extract_image_from_params(product_data, product_data)
             try:
@@ -249,7 +249,7 @@ class CatalogService:
         elif self.params.get('inventory_info', {}).get('is_in_stock','') in [0, '0', False, 'false', 'no', 'No'] and inventory_id:
             es_query.must(ESQueryBuilder.range_query("inventory_details.{}".format(inventory_id), range_doc={'lte': 0}))
         if self.params.get('noderetail_agg_id'):
-            retail_user_instance_data = self.coordinator.get_single_data_from_db('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
+            retail_user_instance_data = self.coordinator.get_single_data_from_db_pool('retail_user_instance', [{'col':'user_name', 'val': self.params.get('noderetail_agg_id','')}], ['vendor_id'])
             if retail_user_instance_data:
                 es_query.must(ESQueryBuilder.term_query("vendor_id", retail_user_instance_data.get('vendor_id', '')))
         final_feed_query = {'query': ESQueryBuilder().parse_object_to_json(es_query)}
