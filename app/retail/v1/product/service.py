@@ -62,6 +62,7 @@ class ProductService:
                 storefront_id = self.coordinator.get_storefront_id(catalog_id)
                 marketplace_details = self.coordinator.get_marketplace_details(storefront_id.get('storefront_id'))
                 instance_details = json.loads(marketplace_details.get('instance_details', '{}'))
+                marketplace_name = self.coordinator.get_marketplace_name(instance_details.get('marketplace_instance'))
                 entity_id = self.generate_api_logs(type='product_status', identifier_id=ondc_item_id, identifier_instance_id=storefront_id.get('storefront_id'))
 
                 response_payload = []
@@ -78,7 +79,7 @@ class ProductService:
                         "agg_marketplace_info": [
                             {
                                 "agg_marketplace_id": instance_details.get('marketplace_instance'),
-                                "agg_marketplace_name": marketplace_details.get('instance_name'),
+                                "agg_marketplace_name": marketplace_name.get('marketplace_name'),
                                 "is_item_active": True if details.get('is_active') == 1 else False,
                                 "is_item_instock": True if float(details.get('qty', 0)) > 0 else False,
                                 "inventory": str(details.get('qty')),
@@ -89,3 +90,4 @@ class ProductService:
                     }
                     response_payload.append(payload)
                 return {"api_action_status": "success", "items_status": response_payload}
+

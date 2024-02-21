@@ -13,7 +13,7 @@ class ProductCoordinator(BaseCoordinator):
         return self.mysql_conn_pool.query_db_one_pool(query)
 
     def get_product_status(self, ondc_item_id, account_id):
-        query = '''select cp.catalog_id, cp.ondc_item_id, cp.created_by, cp.account_id, cp.is_active, cp.is_in_stock, 
+        query = '''select cp.catalog_id, cp.ondc_item_id, cp.created_by, cp.is_active, 
                 pisi.qty, cp.updated_at, pisi.updated_at from crs_products cp
                 JOIN plotch_inventory_summary_item pisi on cp.product_id = pisi.product_id 
                 where cp.ondc_item_id = '{}' and cp.account_id = '{}' '''.format(ondc_item_id, account_id)
@@ -26,6 +26,12 @@ class ProductCoordinator(BaseCoordinator):
         return self.mysql_conn_pool.query_db_one_pool(query)
 
     def get_marketplace_details(self, storefront_id):
-        query = '''SELECT instance_details, instance_name from plotch_instance where instance_id = '{}' 
-        '''.format(storefront_id)
+        query = '''SELECT instance_details, instance_name from plotch_instance where instance_id = '{}' and
+        status = 1 and instance_type_id = 46 '''.format(storefront_id)
         return self.mysql_conn_pool.query_db_one_pool(query)
+
+    def get_marketplace_name(self, marketplace_instance_id):
+        query = '''select marketplace_name from plotch_marketplaces where marketplace_instance_id = '{}' 
+        '''.format(marketplace_instance_id)
+        return self.mysql_conn_pool.query_db_one_pool(query)
+
