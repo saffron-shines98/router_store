@@ -25,9 +25,9 @@ class ProductService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def create_product_request_log(self):
         self.headers.update({"Skip-Validation": self.headers.get('Skip-Validation') or "1",
@@ -54,7 +54,8 @@ class ProductService:
             ondc_item_id = product_details.get('item_id')
             email = product_details.get('noderetail_account_user_id')
             authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
-            product_status_details = self.coordinator.get_product_status(ondc_item_id, email)
+            account_id = self.coordinator.get_account_id(email)
+            product_status_details = self.coordinator.get_product_status(ondc_item_id, account_id.get('account_id'))
             if product_status_details:
                 item = product_status_details[0]
                 catalog_id = item.get('catalog_id')
@@ -72,14 +73,14 @@ class ProductService:
                         "noderetail_account_user_id": details.get('account_id'),
                         "noderetail_catalog_id": details.get('catalog_id'),
                         "is_item_active": True if details.get('is_active') == 1 else False,
-                        "is_item_instock": True if details.get('is_in_stock') == 1 else False,
+                        "is_item_instock": True if float(details.get('qty', 0)) > 0 else False,
                         "inventory": str(details.get('qty')),
                         "agg_marketplace_info": [
                             {
                                 "agg_marketplace_id": instance_details.get('marketplace_instance'),
                                 "agg_marketplace_name": marketplace_details.get('instance_name'),
                                 "is_item_active": True if details.get('is_active') == 1 else False,
-                                "is_item_instock": True if details.get('is_in_stock') == 1 else False,
+                                "is_item_instock": True if float(details.get('qty', 0)) > 0 else False,
                                 "inventory": str(details.get('qty')),
                                 "last_catalog_sync_time": details.get('updated_at'),
                                 "last_inv_sync_time": details.get('updated_at'),
