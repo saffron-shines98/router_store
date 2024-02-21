@@ -298,11 +298,12 @@ class SqlConnectionpooling(object):
             cursor.execute(query, params)
             connection.commit()
             result = cursor.fetchall()
-            return list(map(lambda row: self.parsed_db_result(row), result)) if result else list()
+            if not result:
+                return []
+            return [self.parsed_db_result(dict(zip([x[0] for x in cursor.description], row))) for row in result]
         finally:
             cursor.close()
             connection.close()
-            SqlConnection.active_connections -= 1
 
     def query_db_one_pool(self, query, params=None, parsed=True) -> dict:
         connection = self.get_connection()

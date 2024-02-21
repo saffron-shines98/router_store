@@ -25,6 +25,14 @@ class BaseCoordinator:
         query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
         return self.mysql_conn.query_db_one(query, tuple([data.get('val') for data in condition_params]))
 
+    def get_single_data_from_db_pool(self, table_name: str, condition_params: list, column_list='*', order_by_column=1, order_by='ASC') -> dict:
+        column_sub_query = ','.join(column_list)
+        where_sub_query = ' and '.join(['{} {} %s'.format(data.get('col'), data.get('operator') or '=')
+                for data in condition_params])
+        order_by_query = ' order by {} {} '.format(order_by_column, order_by)
+        query = '''select {} from {} where {} {} limit 1'''.format(column_sub_query, table_name, where_sub_query, order_by_query,)
+        return self.mysql_conn_pool.query_db_one_pool(query, tuple([data.get('val') for data in condition_params]))
+
     def get_multiple_data_from_db(self, table_name: str, condition_params: list, column_list='*',  order_by_column=1, order_by='ASC') -> list:
         column_sub_query = ','.join(column_list)
         where_sub_query = ' and '.join(['{} {} %s'.format(data.get('col'), data.get('operator') or '=') for data in condition_params])
@@ -74,6 +82,14 @@ class BaseCoordinator:
             return self.mysql_conn.write_db(query, tuple([v for v in db_params.values()]))
         else:
             return self.mysql_conn.cursor.execute(query, tuple([v for v in db_params.values()]))
+
+    def save_data_in_db_pool_with_place_holder(self, db_params, table_name, commit=True):
+        query = "insert into " + table_name + " (" + ",".join(db_params.keys()) + ") VALUES (" + ', '.join('%s' for v in db_params.values()) + ")"
+        if commit:
+            return self.mysql_conn_pool.write_db_pool(query, tuple([v for v in db_params.values()]))
+        else:
+            return self.mysql_conn_pool.cursor.execute(query, tuple([v for v in db_params.values()]))
+
 
     @staticmethod
     def path_with_slash(path: str) -> str:
