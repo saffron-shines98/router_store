@@ -44,3 +44,7 @@ class VendorCoordinator(BaseCoordinator):
         user_instance_id IN({}) '''.format(provider_id, str(user_instance_ids)[1:-1])
         return self.mysql_conn_pool.query_db_pool(query)
 
+    def check_provider_status(self, provider_id, noderetail_storefront_id):
+        query = '''SELECT status FROM plotch_vendor_importer_data WHERE status != 0 AND provider_id = '{}' 
+        and noderetail_storefront_id = '{}' '''.format(provider_id, noderetail_storefront_id)
+        return self.mysql_conn_pool.query_db_one_pool(query)
