@@ -20,9 +20,9 @@ class VendorService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -274,9 +274,9 @@ class VendorService:
                     'store_close_hour': open_hours.get('end_time'),
                 })
             try:
-                self.coordinator.update_data_in_db(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
+                self.coordinator.update_data_in_db_pool(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
                     {'col': 'noderetail_storefront_id', 'val': noderetail_storefront_id}])
             except:
-                self.coordinator.update_data_in_db(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
+                self.coordinator.update_data_in_db_pool(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
                     {'col': 'noderetail_storefront_id', 'val': noderetail_storefront_id}])
         return 'success'

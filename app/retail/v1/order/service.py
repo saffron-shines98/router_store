@@ -24,9 +24,9 @@ class OrderService:
             'identifier_instance_id': self.params.get('noderetail_order_instance_id')
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -49,14 +49,9 @@ class OrderService:
             'identifier_instance_id': self.params.get('noderetail_storefront_id')
         }
         try:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_status_request_logs')
         except:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_status_request_logs')
-        try:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
-        except:
-            error_msg = self.coordinator.push_data_in_queue({"log_id": entity}, 'noderetail_order_status_update_q')
-
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_status_request_logs')
         return 'success'
 
     def customer_status_create(self):
@@ -82,9 +77,9 @@ class OrderService:
             'identifier_instance_id':identifier_instance_id
         }
         try:
-            entity= self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity= self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            entity = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
@@ -141,9 +136,9 @@ class OrderService:
             'customer_instance_id': self.params.get('noderetail_customer_instance_id')
         }
         try:
-            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+            self.coordinator.save_data_in_db_pool(customer_status_payload, 'plotch_customer_importer_data')
         except:
-            self.coordinator.save_data_in_db(customer_status_payload, 'plotch_customer_importer_data')
+            self.coordinator.save_data_in_db_pool(customer_status_payload, 'plotch_customer_importer_data')
         return 'success'
 
     
@@ -214,9 +209,9 @@ class OrderService:
             'is_api': 1
         }
         try:
-            self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
+            self.coordinator.save_data_in_db_pool(request_params, 'plotch_order_importer_data')
         except:
-            self.coordinator.save_data_in_db(request_params, 'plotch_order_importer_data')
+            self.coordinator.save_data_in_db_pool(request_params, 'plotch_order_importer_data')
         params = {
             'payment_mode': payment_info.get('payment_mode'),
             'payment_transaction_id': payment_info.get('payment_transaction_id'),
@@ -225,9 +220,9 @@ class OrderService:
         }
 
         try:
-            self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
+            self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
         except:
-            self.coordinator.save_data_in_db(params, 'plotch_imported_order_transaction')
+            self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
         return 'success'
 
     def order_update(self):
@@ -296,10 +291,10 @@ class OrderService:
             if not value:
                 request_params.pop(key)
         try:
-            self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
+            self.coordinator.update_data_in_db_pool(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
                     {'col': 'storefront_id', 'val': identifier_instance_id}])
         except:
-            self.coordinator.update_data_in_db(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
+            self.coordinator.update_data_in_db_pool(request_params, 'plotch_order_importer_data', [{'col': 'order_id', 'val': identifier_id},
                     {'col': 'storefront_id', 'val': identifier_instance_id}])
 
         payment_transaction_id = payment_info.get('payment_transaction_id')
@@ -309,9 +304,9 @@ class OrderService:
             'payment_status': 1 if payment_info.get('payment_status') == 'paid' else 0
         }
         try:
-            self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+            self.coordinator.update_data_in_db_pool(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
         except:
-            self.coordinator.update_data_in_db(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
+            self.coordinator.update_data_in_db_pool(params, 'plotch_imported_order_transaction', [{'col': 'payment_transaction_id', 'val': payment_transaction_id}])
         return 'success'
 
     def order_fetch(self):
@@ -336,9 +331,9 @@ class OrderService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity_id = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity_id = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
@@ -460,9 +455,9 @@ class OrderService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity_id = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            entity_id = self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            entity_id = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
