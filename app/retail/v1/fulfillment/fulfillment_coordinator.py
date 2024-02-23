@@ -15,10 +15,20 @@ class FulfillmentCoordinator(BaseCoordinator):
             return response.json().get('d')
         raise InvalidAuth('Invalid auth token.')
 
-    def get_fulfillment_status(self, order_id, noderetail_storefront_id, fulfillment_id):
-        query = '''SELECT nfi.fulfillment_id, nfi.fulfillment_mode, nfi.fulfillment_status, nfi.fulfillment_courier,
-        nfi.fulfillment_tracking, nfi.fulfillment_update_time, nfi.created_at FROM noderetail_fulfillment_item as nfi 
-        JOIN noderetail_fulfillment as nf on nf.entity_id = nfi.parent_id 
-        WHERE nf.order_id = '{}' AND nf.noderetail_storefront_id = '{}' and nfi.fulfillment_id = '{}' 
-        '''.format(order_id, noderetail_storefront_id, fulfillment_id)
+    def get_account_id(self, noderetail_storefront_id, noderetail_account_user_id):
+        query = '''SELECT account_id from retail_user_instance where storefront_id = {} 
+        and email = '{}' '''.format(noderetail_storefront_id, noderetail_account_user_id)
+        return self.mysql_conn_pool.query_db_one_pool(query)
+
+    def get_fulfillment_status(self, order_id, account_id, noderetail_storefront_id):
+        query = '''SELECT rss.status_label, rsh.courier_partner, rsh.tracking_number, rsh.updated_at 
+        FROM retail_shipments rsh 
+        JOIN retail_sales_item as rsi on rsh.entity_id = rsi.shipment_id
+        JOIN retail_sales as rs on rs.order_id = rsi.order_id
+        LEFT JOIN retail_shipment_status AS rss ON rss.entity_id = rsh.status 
+        WHERE rs.order_number = '{}' AND rsh.account_id = '{}' and rs.storefront_id = {} 
+        order by rsh.updated_at asc
+        '''.format(order_id, account_id, noderetail_storefront_id)
         return self.mysql_conn.query_db(query)
+
+
