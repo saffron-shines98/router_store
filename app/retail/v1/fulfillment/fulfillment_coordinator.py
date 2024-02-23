@@ -21,13 +21,13 @@ class FulfillmentCoordinator(BaseCoordinator):
         return self.mysql_conn_pool.query_db_one_pool(query)
 
     def get_fulfillment_status(self, order_id, account_id, noderetail_storefront_id):
-        query = '''SELECT rss.status_label, rsh.courier_partner, rsh.tracking_number, rsh.updated_at 
+        query = '''SELECT rss.status_label, rsh.logistic_order_id, rsh.transaction_type,
+        rsh.courier_partner, rsh.tracking_number, rsh.updated_at 
         FROM retail_shipments rsh 
         JOIN retail_sales_item as rsi on rsh.entity_id = rsi.shipment_id
         JOIN retail_sales as rs on rs.order_id = rsi.order_id
         LEFT JOIN retail_shipment_status AS rss ON rss.entity_id = rsh.status 
         WHERE rs.order_number = '{}' AND rsh.account_id = '{}' and rs.storefront_id = {} 
-        order by rsh.updated_at asc
         '''.format(order_id, account_id, noderetail_storefront_id)
         return self.mysql_conn.query_db(query)
 

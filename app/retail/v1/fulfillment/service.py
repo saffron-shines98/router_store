@@ -38,22 +38,21 @@ class FulfillmentService:
         order_id = self.params.get('order_id')
         noderetail_storefront_id = self.params.get('noderetail_storefront_id')
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')
-        fulfillment_id = self.params.get('fulfillment_id')
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         log_id = self.generate_api_logs(type='fulfillment_status', identifier_id=order_id, identifier_instance_id=noderetail_storefront_id)
         account_id = self.coordinator.get_account_id(noderetail_storefront_id,noderetail_account_user_id)
         status_details = self.coordinator.get_fulfillment_status(order_id, account_id.get('account_id'),noderetail_storefront_id)
-        if status_details:
-            for details in status_details:
-                response_payload = {
-                    "api_action_status": "success",
-                    "fulfillment_id": self.params.get('fulfillment_id'), #to confirm whether to take from rqst
-                    "noderetail_fulfillment_id": self.params.get('noderetail_fulfillment_id'), #to confirm whether to take from rqst
-                    "fulfillment_mode": '', #to confirm
-                    "fulfillment_status": details.get('status_label'),
-                    "fulfillment_courier": details.get('courier_partner'),
-                    "fulfillment_tracking": details.get('tracking_number'),
-                    "fulfillment_update_time": details.get('updated_at')
-                }
-                return response_payload
-        return {"error": "Fulfillment status not found for the provided parameters"}
+        if not status_details:
+            return {"error": "No data for given request"}
+        for details in status_details:
+            response_payload = {
+                "api_action_status": "success",
+                "fulfillment_id": self.params.get('logistic_order_id'),
+                "noderetail_fulfillment_id": self.params.get('logistic_order_id'),
+                "fulfillment_mode": details.get('transaction_type'),
+                "fulfillment_status": details.get('status_label'),
+                "fulfillment_courier": details.get('courier_partner'),
+                "fulfillment_tracking": details.get('tracking_number'),
+                "fulfillment_update_time": details.get('updated_at')
+            }
+        return response_payload
