@@ -20,9 +20,9 @@ class VendorService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def authenticate_user(self):
         jwt_token = self.headers.get('Auth-Token')
@@ -199,3 +199,84 @@ class VendorService:
                 }
                 response_payload.append(provider_payload)
             return {"api_action_status": "success", "providers_status": response_payload}
+
+    def update_vendor(self):
+        noderetail_storefront_id = self.params.get('noderetail_storefront_id')
+        for provider_details in self.params.get('providers'):
+            provider_id = provider_details.get('provider_id')
+
+            check_status = self.coordinator.check_provider_status(provider_id, noderetail_storefront_id)
+            if check_status:
+                raise AlreadyExists('Provider already processed. Cannot update.')
+
+            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            log_id = self.generate_api_logs(type='update_vendor', identifier_id=provider_id, identifier_instance_id=noderetail_storefront_id)
+
+            provider_profile = provider_details.get('provider_profile', {})
+            certs = provider_details.get('certs', {})
+            serviceability = provider_details.get('serviceability', [{}])[0]
+            banks = provider_details.get('banks', [{}])[0]
+            tnc = provider_details.get('tnc', {})
+            db_params = {
+                'provider_id': provider_id,
+                'agg_marketplace_id': provider_details.get('agg_marketplace_id'),
+                'provider_status': provider_details.get('status'),
+                'create_account': provider_details.get('create_account'),
+                'agg_subscribe': provider_details.get('agg_subscribe'),
+                'name': provider_profile.get('provider_contact_name'),
+                'store_name': provider_profile.get('store_name'),
+                'logo': provider_profile.get('brand_logo'),
+                'long_desc': provider_profile.get('long_desc'),
+                'short_desc': provider_profile.get('short_desc'),
+                'email': provider_profile.get('provider_email'),
+                'phone': provider_profile.get('provider_phone'),
+                'customer_support_email': provider_profile.get('customer_support_email'),
+                'customer_support_phone': provider_profile.get('customer_support_phone'),
+                'store_image': ','.join(provider_profile.get('store_images')),
+                'fssai_licence_number': certs.get('fssai_license_num'),
+                'aadhaar_num': certs.get('aadhaar_num'),
+                'pan_num': certs.get('pan_num'),
+                'gst_num': certs.get('gst_num'),
+                'category': serviceability.get('category'),
+                'serviceability': serviceability.get('mode'),
+                'radius': serviceability.get('radius'),
+                'unit': serviceability.get('unit'),
+                'beneficary_name': banks.get('beneficary_name'),
+                'bank_name': banks.get('bank_name'),
+                'bank_account_num': banks.get('bank_account_num'),
+                'bank_ifsc_code': banks.get('bank_ifsc_code'),
+                'bank_account_type': banks.get('bank_account_type'),
+                'updated_at': get_current_datetime(),
+                'fulfillment_mode': tnc.get('fulfillment_mode', ''),
+                'available_on_cod': tnc.get('available_on_cod', ''),
+                'cancellable': tnc.get('cancellable', ''),
+                'rateable': tnc.get('rateable', ''),
+                'supports_return_pickup': tnc.get('return_pickup', ''),
+                'return_window': tnc.get('return_window', ''),
+                'returnable': tnc.get('returnable', ''),
+                'time_to_ship': tnc.get('time_to_ship', ''),
+                'courier_control': tnc.get('courier_control', ''),
+            }
+            locations = provider_details.get('locations', [])
+            for details in locations:
+                address = details.get('address', {})
+                schedule = details.get('schedule', {})
+                open_hours = schedule.get('open_hours', [{}])[0]
+                db_params.update({
+                    'gps': details.get('gps'),
+                    'street': address.get('street'),
+                    'city': address.get('city'),
+                    'state': address.get('state'),
+                    'area_code': address.get('area_code'),
+                    'locality': address.get('locality'),
+                    'store_working_days': schedule.get('open_days'),
+                    'store_start_hour': open_hours.get('start_time'),
+                    'store_close_hour': open_hours.get('end_time'),
+                })
+            try:
+                self.coordinator.update_data_in_db_pool(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
+                    {'col': 'noderetail_storefront_id', 'val': noderetail_storefront_id}])
+            except:
+                self.coordinator.update_data_in_db_pool(db_params, 'plotch_vendor_importer_data', [{'col': 'provider_id', 'val': provider_id},
+                    {'col': 'noderetail_storefront_id', 'val': noderetail_storefront_id}])
+        return 'success'

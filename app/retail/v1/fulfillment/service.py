@@ -23,9 +23,9 @@ class FulfillmentService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def fulfillment_create(self):
         order_id = self.params.get('order_id')

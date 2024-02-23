@@ -18,7 +18,7 @@ class VendorCoordinator(BaseCoordinator):
     def get_user_instance_id(self, noderetail_storefront_id):
         query = '''SELECT user_instance_id from retail_user_instance WHERE storefront_id = '{}' '''.format(
             noderetail_storefront_id)
-        return self.mysql_conn.query_db(query)
+        return self.mysql_conn_pool.query_db_pool(query)
 
     def fetch_provider_details(self, identifier_id, user_instance_ids, status_f, storename, email_f, phone_f, city_f, state_f):
         query = '''select rui.seller_id, rui.is_active, rui.company_name, rui.email, rui.mobile, rui.pan_no, rui.gstin,
@@ -32,15 +32,19 @@ class VendorCoordinator(BaseCoordinator):
         JOIN crs_accounts as ca on rui.account_id = ca.account_id
         where rui.seller_id = '{}' AND rui.user_instance_id IN({}) {} {} {} {} {} {} '''.format(identifier_id, str(user_instance_ids)[1:-1], status_f, storename, email_f,
         phone_f, city_f, state_f)
-        return self.mysql_conn.query_db(query)
+        return self.mysql_conn_pool.query_db_pool(query)
 
     def count_crs_products(self):
         query = '''SELECT COUNT(*) AS num_items_live FROM crs_products as cp 
         JOIN retail_user_instance AS rui on cp.seller_id = rui.seller_id'''
-        return self.mysql_conn.query_db(query)
+        return self.mysql_conn_pool.query_db_pool(query)
 
     def fetch_vender_status(self, provider_id, user_instance_ids):
         query = '''SELECT seller_id, is_active from retail_user_instance AS rui WHERE seller_id = '{}' AND 
         user_instance_id IN({}) '''.format(provider_id, str(user_instance_ids)[1:-1])
-        return self.mysql_conn.query_db(query)
+        return self.mysql_conn_pool.query_db_pool(query)
 
+    def check_provider_status(self, provider_id, noderetail_storefront_id):
+        query = '''SELECT status FROM plotch_vendor_importer_data WHERE status != 0 AND provider_id = '{}' 
+        and noderetail_storefront_id = '{}' '''.format(provider_id, noderetail_storefront_id)
+        return self.mysql_conn_pool.query_db_one_pool(query)
