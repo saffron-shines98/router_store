@@ -17,7 +17,7 @@ class FulfillmentCoordinator(BaseCoordinator):
 
     def get_account_id(self, noderetail_storefront_id, noderetail_account_user_id):
         query = '''SELECT account_id from retail_user_instance where storefront_id = {} 
-        and email = '{}' '''.format(noderetail_storefront_id, noderetail_account_user_id)
+        and email = '{}' limit 1 '''.format(noderetail_storefront_id, noderetail_account_user_id)
         return self.mysql_conn_pool.query_db_one_pool(query)
 
     def get_fulfillment_status(self, order_id, account_id, noderetail_storefront_id):
