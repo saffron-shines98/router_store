@@ -27,8 +27,8 @@ class FulfillmentCoordinator(BaseCoordinator):
         JOIN retail_sales_item as rsi on rsh.entity_id = rsi.shipment_id
         JOIN retail_sales as rs on rs.order_id = rsi.order_id
         LEFT JOIN retail_shipment_status AS rss ON rss.entity_id = rsh.status 
-        WHERE rs.order_number = '{}' AND rsh.account_id = '{}' and rs.storefront_id = {} 
+        WHERE rs.order_number = '{}' AND rsh.account_id = '{}' and rs.storefront_id = {} order by rsh.updated_at desc
         '''.format(order_id, account_id, noderetail_storefront_id)
-        return self.mysql_conn.query_db(query)
+        return self.mysql_conn_pool.query_db_pool(query)
 
 
