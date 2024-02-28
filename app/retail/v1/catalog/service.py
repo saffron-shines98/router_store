@@ -31,9 +31,9 @@ class CatalogService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
 
     def extract_image_from_params(self, product_data, other_params):
         image_list = list()
@@ -296,13 +296,12 @@ class CatalogService:
         return {'catalog_count_data': catalog_count_data}
 
     def category_fetch(self):
-        noderetail_account_user_id = self.params.get('noderetail_account_user_id')
+        noderetail_storefront_id = self.params.get('noderetail_storefront_id')
         ondc_domain = self.params.get('category_domain')
         page_number = max(int(self.params.get('page_number', 1)), 1)
         page_size = int(self.params.get('page_size', 10))
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
-        # entity_id = self.generate_api_logs(type='category_fetch', identifier_id=noderetail_account_user_id,
-        #                                    identifier_instance_id=noderetail_account_user_id)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        entity_id = self.generate_api_logs(type='category_fetch', identifier_id=ondc_domain, identifier_instance_id=noderetail_storefront_id)
         if page_size or page_number:
             pagination_cond = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
 
@@ -312,7 +311,10 @@ class CatalogService:
         attribute_set_values = [details.get('source_node') for details in attribute_set_ids]
         attribute_details = self.coordinator.attribute_details(attribute_set_values)
         response_payload = []
+
         for details in category_details:
+            parent_id = details.get('parent_id')
+            parent_details = self.coordinator.get_category_parent_details(parent_id)
             payload = {
                 "category_name": details.get('name'),
                 "noderetail_category_id": details.get('category_id'),
@@ -320,20 +322,17 @@ class CatalogService:
                 "category_level": details.get('level'),
                 "parent_categories": [
                     {
-                        "parent_category_name": details.get(''),
-                        "parent_category_level": details.get('')
+                        "parent_category_name": '' if parent_id == 0 else parent_details.get('name'),
+                        "parent_category_level": '' if parent_id == 0 else parent_details.get('level')
                     }
                 ],
                 "attributes": []
             }
             for attribute in attribute_details:
-                attribute_name = attribute.get('attribute_name')
-                attribute_value = attribute.get('attribute_value')
-
                 attribute_payload = {
-                    "attribute_name": attribute_name,
-                    "Attribute_value": attribute_value,
-                    "Mandatory_flag": details.get('')
+                    "attribute_name": attribute.get('attribute_name'),
+                    "Attribute_value": attribute.get('attribute_value'),
+                    "Mandatory_flag": 'MI' if attribute.get('is_required') == 1 else 'NMI'
                 }
                 payload["attributes"].append(attribute_payload)
             response_payload.append(payload)
