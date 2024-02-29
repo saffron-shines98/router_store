@@ -50,3 +50,6 @@ v1.add_url_rule(price_prefix + '/update', view_func=price_view.PriceUpdate.as_vi
 
 price_prefix = '/price'
 v1.add_url_rule(price_prefix + '/bulkupdate', view_func=price_view.BulkPriceUpdate.as_view('bulk_price_update'))
+
+category_prefix = '/category'
+v1.add_url_rule(category_prefix + '/fetch', view_func=catalog_view.FetchCategory.as_view('category_fetch'))
