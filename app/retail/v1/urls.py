@@ -6,6 +6,7 @@ from app.retail.v1.inventory import views as inventory_view
 from app.retail.v1.price import views as price_view
 from app.retail.v1.catalog import views as catalog_view
 from app.retail.v1.fulfillment import views as fulfillment_view
+from app.retail.v1.cart import views as cart_view
 
 v1 = Blueprint('v1', __name__)
 
@@ -49,3 +50,7 @@ v1.add_url_rule(price_prefix + '/update', view_func=price_view.PriceUpdate.as_vi
 
 price_prefix = '/price'
 v1.add_url_rule(price_prefix + '/bulkupdate', view_func=price_view.BulkPriceUpdate.as_view('bulk_price_update'))
+
+cart_prefix = '/cart'
+v1.add_url_rule(cart_prefix + '/create', view_func=cart_view.Cartcreate.as_view('cart_create'))
+v1.add_url_rule(cart_prefix + '/update', view_func=cart_view.Cartupdate.as_view('cart_update'))
