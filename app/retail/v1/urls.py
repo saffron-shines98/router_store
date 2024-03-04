@@ -20,6 +20,7 @@ v1.add_url_rule(order_prefix + '/status', view_func=status_views.OrderStatus.as_
 
 fulfillment_prefix = '/fulfillment'
 v1.add_url_rule(fulfillment_prefix + '/create', view_func=fulfillment_view.FulfillmentCreate.as_view('fulfillment_create'))
+v1.add_url_rule(fulfillment_prefix + '/status', view_func=fulfillment_view.FulfillmentStatus.as_view('fulfillment_status'))
 
 
 customer_prefix = '/customer'
@@ -51,6 +52,11 @@ v1.add_url_rule(price_prefix + '/update', view_func=price_view.PriceUpdate.as_vi
 price_prefix = '/price'
 v1.add_url_rule(price_prefix + '/bulkupdate', view_func=price_view.BulkPriceUpdate.as_view('bulk_price_update'))
 
+
 cart_prefix = '/cart'
 v1.add_url_rule(cart_prefix + '/create', view_func=cart_view.Cartcreate.as_view('cart_create'))
 v1.add_url_rule(cart_prefix + '/update', view_func=cart_view.Cartupdate.as_view('cart_update'))
+
+category_prefix = '/category'
+v1.add_url_rule(category_prefix + '/fetch', view_func=catalog_view.FetchCategory.as_view('category_fetch'))
+
