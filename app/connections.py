@@ -347,3 +347,79 @@ class SqlConnectionpooling(object):
             else:
                 parsed_db_data.update({key: val})
         return parsed_db_data
+
+class SqlConnectionpoolingnodeapp(object):
+    active_connections = 0
+    total_write_connections = 0
+
+    def __init__(self, db_config):
+        self.db_config = db_config
+        self.connection_pool = PooledDB(
+            creator=pymysql,
+            mincached=5,
+            maxcached=100,
+            maxconnections=100,
+            **self.db_config
+        )
+
+    def get_connection(self):
+        connection = self.connection_pool.connection()
+        SqlConnection.active_connections += 1
+        return connection
+
+    def query_db_pool_nodeapp(self, query, params=None) -> list:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            result = cursor.fetchall()
+            if not result:
+                return []
+            return [self.parsed_db_result_nodeapp(dict(zip([x[0] for x in cursor.description], row))) for row in result]
+        finally:
+            cursor.close()
+            connection.close()
+
+    def query_db_one_pool_nodeapp(self, query, params=None, parsed=True) -> dict:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            result = cursor.fetchone()
+            if result is None:
+                return dict()
+            if parsed:
+                return self.parsed_db_result_nodeapp(dict(zip([x[0] for x in cursor.description], result)))
+            else:
+                return dict(zip([x[0] for x in cursor.description], result))
+        finally:
+            cursor.close()
+            connection.close()
+
+    def write_db_pool_nodeapp(self, query, params=None) -> int:
+        connection = self.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(query, params)
+            connection.commit()
+            SqlConnection.total_write_connections += 1
+            return cursor.lastrowid
+        finally:
+            cursor.close()
+            connection.close()
+
+    @staticmethod
+    def parsed_db_result_nodeapp(db_data) -> dict:
+        if not db_data:
+            return {}
+        parsed_db_data = {}
+        for key, val in db_data.items():
+            if isinstance(val, datetime):
+                parsed_db_data.update({key: val.strftime('%Y-%m-%d %H:%M:%S')})
+            elif isinstance(val, str) and val == 'NULL':
+                parsed_db_data.update({key: None})
+            else:
+                parsed_db_data.update({key: val})
+        return parsed_db_data
