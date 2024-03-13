@@ -85,6 +85,15 @@ class BaseCoordinator:
         else:
             return self.mysql_conn_pool.cursor.write_db_pool(query, tuple([data.get('val') for data in condition_params]))
 
+    def update_data_in_db_pool_nodeapp(self, db_params: dict, table_name: str, condition_params: list, commit=True) -> int:
+        update_values = [str(key) + " = '" + str(val) + "'" for key, val in db_params.items()]
+        query = 'update ' + table_name + '  set ' + ','.join(update_values) + ' where {}'.format(' AND '.join(['{} {} %s'.format(data.get('col'), data.get('operator') or '=')
+                for data in condition_params]))
+        if commit:
+            return self.mysql_conn_pool_nodeapp.write_db_pool_nodeapp(query, tuple([data.get('val') for data in condition_params]))
+        else:
+            return self.mysql_conn_pool_nodeapp.cursor.write_db_pool_nodeapp(query, tuple([data.get('val') for data in condition_params]))
+
     def save_data_in_db_with_place_holder(self, db_params, table_name, commit=True):
         query = "insert into " + table_name + " (" + ",".join(db_params.keys()) + ") VALUES (" + ', '.join('%s' for v in db_params.values()) + ")"
         if commit:
