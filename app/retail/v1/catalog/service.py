@@ -31,9 +31,9 @@ class CatalogService:
             'identifier_instance_id': identifier_instance_id
         }
         try:
-            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool_nodeapp(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            return self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
+            return self.coordinator.save_data_in_db_pool_nodeapp(log_params, 'plotch_noderetailapi_request_logs')
 
     def extract_image_from_params(self, product_data, other_params):
         image_list = list()
