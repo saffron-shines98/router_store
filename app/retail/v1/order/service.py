@@ -149,7 +149,7 @@ class OrderService:
             check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
         except:
             check_duplicacy = self.coordinator.check_order_duplicacy(identifier_id, identifier_instance_id)
-        log_id = self.generate_api_logs(type='order', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        log_id = self.generate_api_logs('order', identifier_id, identifier_instance_id)
         if check_duplicacy:
             return 'success'
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
@@ -233,7 +233,7 @@ class OrderService:
         if check_status:
             raise AlreadyExists('Order already processed. Cannot update.')
 
-        log_id = self.generate_api_logs(type='order_update', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        log_id = self.generate_api_logs('order_update', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         customer_info = self.params.get('customer_info', {})
         billing_info = self.params.get('billing_info', {})
@@ -322,7 +322,7 @@ class OrderService:
         page_number = max(int(self.params.get('page_number', 1)), 1)
         page_size = int(self.params.get('page_size', 10))
 
-        log_id = self.generate_api_logs(type='order_fetch', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
         if page_size or page_number:
@@ -434,7 +434,7 @@ class OrderService:
         noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')  # poid.storefront_id
         identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
 
-        log_id = self.generate_api_logs(type='order_status', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        log_id = self.generate_api_logs('order_status', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
         order_status_data = self.coordinator.get_order_status(identifier_id, identifier_instance_id)
