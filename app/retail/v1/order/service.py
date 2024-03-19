@@ -319,13 +319,15 @@ class OrderService:
         created_at_end = self.params.get('order_created_at_date_end', '')
         updated_at_start = self.params.get('order_updated_at_date_start', '')
         updated_at_end = self.params.get('order_updated_at_date_end', '')
-        page_number = max(int(self.params.get('page_number', 1)), 1)
-        page_size = int(self.params.get('page_size', 10))
+        page_number = self.params.get('page_number')
+        page_size = self.params.get('page_size')
 
         log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
-        if page_size or page_number:
+        pagination_condition = ''
+        if page_size and page_number:
+            page_number, page_size = max(int(page_number), 1), max(int(page_size), 1)
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
         if created_at_start and created_at_end:
@@ -347,8 +349,8 @@ class OrderService:
 
         for order_data in get_orders_data:
                 payload = {
-                    "noderetail_order_id": order_data.get("noderetail_order_id"),
-                    "network_order_id": order_data.get("ondc_network_order_id"),
+                    "noderetail_order_id": order_data.get("rs_order_id"),
+                    "network_order_id": order_data.get("network_order_id"),
                     "client_order_id": identifier_id,
                     "customer_info": {
                         "customer_id": order_data.get("alternate_customer_id"),
@@ -429,7 +431,7 @@ class OrderService:
 
     def order_status(self):
         identifier_id = self.params.get('order_id')  # posr.order_id
-        noderetail_order_id = self.params.get('noderetail_order_id')  # poid.order_id
+        noderetail_order_id = self.params.get('noderetail_order_id')  # rs.order_id
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')  # poid.user_instance_id
         noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')  # poid.storefront_id
         identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
@@ -443,19 +445,19 @@ class OrderService:
         if order_status_data:
             for response in order_status_data:
                 payload = {
-                    "order_id": response.get('noderetail_order_id'),
-                    "noderetail_order_id": response.get('noderetail_order_id'),
-                    "is_order_created": response.get('is_order_created'),
+                    "order_id": int(response.get('order_id', 0)),
+                    "noderetail_order_id": response.get('rs_order_id'),
+                    "is_order_created": True if response.get('is_order_created') == 1 else False,
                     "noderetail_account_user_id": response.get('noderetail_account_user_id'),
                     "noderetail_order_instance_id": noderetail_order_instance_id,
-                    "is_order_active": 1,
+                    "is_order_active": True,
                     "order_status": response.get('order_status'),
                     "order_created_time": response.get('order_created_time'),
                     "order_update_time": response.get('order_update_time'),
                     "order_items_info": [
                         {
                             "item_order_id": response.get('item_order_id'),
-                            "item_id": response.get('item_id'),
+                            "item_id": int(response.get('item_id', 0)),
                             "noderetail_item_id": response.get('noderetail_item_id'),
                             "fulfillments": [
                                 {
