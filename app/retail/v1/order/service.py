@@ -325,7 +325,6 @@ class OrderService:
         log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
-        pagination_condition = ''
         if page_size or page_number:
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
@@ -418,7 +417,7 @@ class OrderService:
                         {
                             "fulfillment_id": order_data.get("fulfillment_id"),
                             "fulfillment_mode": order_data.get("fulfillment_mode"),
-                            "fulfillment_status": order_data.get('fulfillment_status'),
+                            "fulfillment_status": order_data.get("fulfillment_status"),
                             "fulfillment_courier": order_data.get("fulfillment_courier"),
                             "fulfillment_tracking": order_data.get("fulfillment_tracking"),
                             "fulfillment_update_time": order_data.get("fulfillment_update_time")
