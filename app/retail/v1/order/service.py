@@ -310,8 +310,9 @@ class OrderService:
         return 'success'
 
     def order_fetch(self):
-        identifier_id = self.params.get('order_id')  # posr.order_id
-        identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+        order_number = self.params.get('order_id')  # rs.order_number
+        identifier_instance_id = self.params.get('noderetail_storefront_id')  # storefront_id
+        rs_order_id = self.params.get('noderetail_order_id')
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')
         noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')
         order_status = self.params.get('order_status', '')
@@ -319,21 +320,32 @@ class OrderService:
         created_at_end = self.params.get('order_created_at_date_end', '')
         updated_at_start = self.params.get('order_updated_at_date_start', '')
         updated_at_end = self.params.get('order_updated_at_date_end', '')
-        page_number = max(int(self.params.get('page_number', 1)), 1)
-        page_size = int(self.params.get('page_size', 10))
+        page_number = self.params.get('page_number')
+        page_size = self.params.get('page_size')
+
+        if not identifier_instance_id:
+            raise BadRequest('StorefrontID is Mandatory')
+
+        identifier_id = order_number if order_number else rs_order_id
 
         log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
-        if page_size or page_number:
+        pagination_condition = ''
+        if page_size and page_number:
+            page_number, page_size = max(int(page_number), 1), max(int(page_size), 1)
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
         if created_at_start and created_at_end:
-            date_created = '''AND poid.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
+            date_created = '''AND po.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
         date_updated = ''
         if updated_at_start and updated_at_end:
-            date_updated = '''AND poid.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
-        get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition)
+            date_updated = '''AND po.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
+        order_num = ''
+        if order_number:
+            order_num = '''AND po.order_id = '{}' '''.format(order_number)
+        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, rs_order_id, order_num, date_created, date_updated, pagination_condition)
+        fetch_details = self.coordinator.get_fetch_details(identifier_instance_id, rs_order_id, order_status, order_num)
 
         response_payload = {
             "api_action_status": "success",
@@ -347,9 +359,9 @@ class OrderService:
 
         for order_data in get_orders_data:
                 payload = {
-                    "noderetail_order_id": order_data.get("noderetail_order_id"),
-                    "network_order_id": order_data.get("ondc_network_order_id"),
-                    "client_order_id": identifier_id,
+                    "noderetail_order_id": order_data.get("rs_order_id"),
+                    "network_order_id": order_data.get("network_order_id"),
+                    "client_order_id": order_data.get('order_id'),
                     "customer_info": {
                         "customer_id": order_data.get("alternate_customer_id"),
                         "noderetail_customer_id": order_data.get("noderetail_customer_id"),
@@ -413,17 +425,20 @@ class OrderService:
                         "payment_transaction_id": order_data.get("payment_transaction_id"),
                         "payment_status": order_data.get("payment_status")
                     },
-                    "fulfillments": [
-                        {
-                            "fulfillment_id": order_data.get("fulfillment_id"),
-                            "fulfillment_mode": order_data.get("fulfillment_mode"),
-                            "fulfillment_status": order_data.get("fulfillment_status"),
-                            "fulfillment_courier": order_data.get("fulfillment_courier"),
-                            "fulfillment_tracking": order_data.get("fulfillment_tracking"),
-                            "fulfillment_update_time": order_data.get("fulfillment_update_time")
-                       }
-                    ]
+                    "fulfillments": []
                 }
+                for fetch_detail in fetch_details:
+                    if fetch_detail["order_id"] == order_data["order_number"]:
+                        fulfillment_payload = {
+                            "fulfillment_id": fetch_detail.get("fulfillment_id"),
+                            "fulfillment_mode": fetch_detail.get("fulfillment_mode"),
+                            "fulfillment_status": fetch_detail.get("fulfillment_status"),
+                            "fulfillment_courier": fetch_detail.get("fulfillment_courier"),
+                            "fulfillment_tracking": fetch_detail.get("fulfillment_tracking"),
+                            "fulfillment_update_time": fetch_detail.get("fulfillment_update_time")
+                        }
+                        payload["fulfillments"].append(fulfillment_payload)
+
                 response_payload["orders"].append(payload)
         return response_payload
 
