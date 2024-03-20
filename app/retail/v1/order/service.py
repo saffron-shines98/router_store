@@ -319,15 +319,14 @@ class OrderService:
         created_at_end = self.params.get('order_created_at_date_end', '')
         updated_at_start = self.params.get('order_updated_at_date_start', '')
         updated_at_end = self.params.get('order_updated_at_date_end', '')
-        page_number = self.params.get('page_number')
-        page_size = self.params.get('page_size')
+        page_number = max(int(self.params.get('page_number', 1)), 1)
+        page_size = int(self.params.get('page_size', 10))
 
-        # log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
+        log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
         pagination_condition = ''
-        if page_size and page_number:
-            page_number, page_size = max(int(page_number), 1), max(int(page_size), 1)
+        if page_size or page_number:
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
         if created_at_start and created_at_end:
@@ -336,6 +335,7 @@ class OrderService:
         if updated_at_start and updated_at_end:
             date_updated = '''AND poid.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
         get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition)
+
         response_payload = {
             "api_action_status": "success",
             "order_fetch_request_id": None,
@@ -348,9 +348,9 @@ class OrderService:
 
         for order_data in get_orders_data:
                 payload = {
-                    "noderetail_order_id": order_data.get("rs_order_id"),
-                    "network_order_id": order_data.get("network_order_id"),
-                    "client_order_id": fetch_details.get('order_id'),
+                    "noderetail_order_id": order_data.get("noderetail_order_id"),
+                    "network_order_id": order_data.get("ondc_network_order_id"),
+                    "client_order_id": identifier_id,
                     "customer_info": {
                         "customer_id": order_data.get("alternate_customer_id"),
                         "noderetail_customer_id": order_data.get("noderetail_customer_id"),
@@ -418,7 +418,7 @@ class OrderService:
                         {
                             "fulfillment_id": order_data.get("fulfillment_id"),
                             "fulfillment_mode": order_data.get("fulfillment_mode"),
-                            "fulfillment_status": order_data.get('fulfilment_status'),
+                            "fulfillment_status": order_data.get('fulfillment_status'),
                             "fulfillment_courier": order_data.get("fulfillment_courier"),
                             "fulfillment_tracking": order_data.get("fulfillment_tracking"),
                             "fulfillment_update_time": order_data.get("fulfillment_update_time")
@@ -487,6 +487,5 @@ class OrderService:
                         ]
                     }
                     response_payload.append(payload)
-        print(rs_order_id_list, "order_id_list2")
         return {"api_action_status": "success", "orders_status": response_payload}
 
