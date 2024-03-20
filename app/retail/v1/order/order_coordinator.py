@@ -34,10 +34,7 @@ class OrderCoordinator(BaseCoordinator):
 
     def fetch_order_details(self, identifier_instance_id, rs_order_id, order_num, date_created, date_updated, pagination_condition):
         query = ''' SELECT po.*, rs.order_id as rs_order_id, rs.order_number, 
-        rsi.ondc_order_id AS network_order_id, po.alternate_customer_id AS noderetail_customer_id,
-        rsi.vendor_order_id AS fulfilment_id, 
-        rsh.status AS fulfillment_mode, rsh.courier_partner AS fulfilment_courier, 
-        rsh.tracking_number AS fulfillment_tracking, rsh.updated_at AS fulfillment_update_time
+        rsi.ondc_order_id AS network_order_id, po.alternate_customer_id AS noderetail_customer_id  
         FROM plotch_order_importer_data as po 
         JOIN retail_sales as rs on rs.order_number = po.order_id
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
@@ -48,9 +45,9 @@ class OrderCoordinator(BaseCoordinator):
         return self.mysql_conn_pool.query_db_pool(query)
 
     def get_fetch_details(self, identifier_instance_id, rs_order_id, order_status, order_num):
-        query= '''SELECT po.order_id, po.fulfilment_status AS fulfillment_status, rsi.vendor_order_id AS fulfilment_id, 
-        rsh.transaction_type AS fulfillment_mode, rsh.courier_partner AS fulfilment_courier, rsh.tracking_number AS fulfillment_tracking, 
-        po.created_at AS fulfillment_update_time FROM plotch_order_status_request as po 
+        query= '''SELECT po.order_id, po.fulfilment_status AS fulfillment_status, po.created_at, 
+        rsi.vendor_order_id, rsh.transaction_type, rsh.courier_partner, rsh.tracking_number  
+        FROM plotch_order_status_request as po 
         JOIN retail_sales as rs on rs.order_number = po.order_id  
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
         JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id WHERE po.storefront_id = '{}' and 

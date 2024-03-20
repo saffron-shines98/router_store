@@ -337,10 +337,10 @@ class OrderService:
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
         if created_at_start and created_at_end:
-            date_created = '''AND po.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
+            date_created = '''AND rsi.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
         date_updated = ''
         if updated_at_start and updated_at_end:
-            date_updated = '''AND po.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
+            date_updated = '''AND rsi.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
         order_num = ''
         if order_number:
             order_num = '''AND po.order_id = '{}' '''.format(order_number)
@@ -430,12 +430,12 @@ class OrderService:
                 for fetch_detail in fetch_details:
                     if fetch_detail["order_id"] == order_data["order_number"]:
                         fulfillment_payload = {
-                            "fulfillment_id": fetch_detail.get("fulfillment_id"),
-                            "fulfillment_mode": fetch_detail.get("fulfillment_mode"),
+                            "fulfillment_id": fetch_detail.get("vendor_order_id"),
+                            "fulfillment_mode": fetch_detail.get("transaction_type"),
                             "fulfillment_status": fetch_detail.get("fulfillment_status"),
-                            "fulfillment_courier": fetch_detail.get("fulfillment_courier"),
-                            "fulfillment_tracking": fetch_detail.get("fulfillment_tracking"),
-                            "fulfillment_update_time": fetch_detail.get("fulfillment_update_time")
+                            "fulfillment_courier": fetch_detail.get("courier_partner"),
+                            "fulfillment_tracking": fetch_detail.get("tracking_number"),
+                            "fulfillment_update_time": fetch_detail.get("created_at")
                         }
                         payload["fulfillments"].append(fulfillment_payload)
 
