@@ -446,8 +446,8 @@ class OrderService:
             if order_id:
                 rs_order_id_list.append(order_id)
 
-            # log_id = self.generate_api_logs('order_status', order_number, storefront_id)
-            # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            log_id = self.generate_api_logs('order_status', order_number, storefront_id)
+            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
             order_status_data = self.coordinator.get_order_status(rs_order_number_list, storefront_id, rs_order_id_list)
             status_details = self.coordinator.get_status(rs_order_number_list, storefront_id)
