@@ -446,8 +446,8 @@ class OrderService:
             if order_id:
                 rs_order_id_list.append(order_id)
 
-            log_id = self.generate_api_logs('order_status', order_number, storefront_id)
-            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            # log_id = self.generate_api_logs('order_status', order_number, storefront_id)
+            # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
             order_status_data = self.coordinator.get_order_status(rs_order_number_list, storefront_id, rs_order_id_list)
             status_details = self.coordinator.get_status(rs_order_number_list, storefront_id)
@@ -466,25 +466,24 @@ class OrderService:
                         "order_status": status_detail['order_status'],
                         "order_created_time": response.get('order_created_time'),
                         "order_update_time": response.get('order_update_time'),
-                        "order_items_info": [
-                            {
-                                "item_order_id": response.get('item_order_id'),
-                                "item_id": int(response.get('item_id', 0)),
-                                "noderetail_item_id": response.get('noderetail_item_id'),
-                                "fulfillments": [
-                                    {
-                                        "fulfillment_id": response.get('fulfillment_id'),
-                                        "fulfillment_mode": response.get('fulfillment_mode'),
-                                        "fulfillment_status": status_detail['fulfilment_status'],
-                                        "fulfillment_courier": response.get('fulfilment_courier'),
-                                        "fulfillment_tracking": response.get('fulfillment_tracking'),
-                                        "fulfillment_update_time": response.get('fulfillment_update_time')
-                                    }
-                                ],
-                                "refund_status": response.get('refund_status')
-                            }
-                        ]
+                        "order_items_info": []
                     }
+                    for details in status_details:
+                        item_payload = {
+                            "item_order_id": details.get('item_order_id'),
+                            "item_id": int(details.get('item_id')),
+                            "noderetail_item_id": details.get('noderetail_item_id'),
+                            "fulfillments": [{
+                                "fulfillment_id": details.get('fulfillment_id'),
+                                "fulfillment_mode": details.get('fulfillment_mode'),
+                                "fulfillment_status": details.get('fulfillment_status'),
+                                "fulfillment_courier": details.get('fulfillment_courier'),
+                                "fulfillment_tracking": details.get('fulfillment_tracking'),
+                                "fulfillment_update_time": details.get('fulfillment_update_time')
+                            }],
+                            "refund_status": details.get('refund_status')
+                        }
+                        payload["order_items_info"].append(item_payload)
                     response_payload.append(payload)
         return {"api_action_status": "success", "orders_status": response_payload}
 
