@@ -323,7 +323,7 @@ class OrderService:
         page_number = self.params.get('page_number')
         page_size = self.params.get('page_size')
 
-        if not identifier_instance_id:
+        if not (order_number and identifier_instance_id):
             raise BadRequest('order_id & Storefront_id are Mandatory')
 
         identifier_id = order_number if order_number else rs_order_id
