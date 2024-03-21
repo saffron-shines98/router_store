@@ -324,7 +324,7 @@ class OrderService:
         page_size = self.params.get('page_size')
 
         if not identifier_instance_id:
-            raise BadRequest('Storefront_id and noderetail_order_id are Mandatory')
+            raise BadRequest('order_id & Storefront_id are Mandatory')
 
         identifier_id = order_number if order_number else rs_order_id
 
@@ -341,16 +341,16 @@ class OrderService:
         date_updated = ''
         if updated_at_start and updated_at_end:
             date_updated = '''AND rsi.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
-        order_num = ''
-        if order_number:
-            order_num = '''AND rs.order_number = '{}' '''.format(order_number)
+        order_id = ''
+        if rs_order_id:
+            order_id = '''AND rs.order_id = '{}' '''.format(rs_order_id)
         order_status_cond = ''
         if order_status:
             order_status_cond = '''AND po.order_status = '{}' '''.format(order_status)
-        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, rs_order_id, order_num, date_created, date_updated, pagination_condition)
-        address = self.coordinator.get_customer_address('billing', identifier_instance_id, rs_order_id, order_num)
-        shipping_adddress = self.coordinator.get_customer_address('shipping', identifier_instance_id, rs_order_id, order_num)
-        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, rs_order_id, order_status_cond, order_num)
+        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, order_number, order_id, date_created, date_updated, pagination_condition)
+        address = self.coordinator.get_customer_address('billing', identifier_instance_id, order_number, order_id)
+        shipping_adddress = self.coordinator.get_customer_address('shipping', identifier_instance_id, order_number, order_id)
+        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_number, order_status_cond, order_id, )
 
         response_payload = {
             "api_action_status": "success",
@@ -367,11 +367,11 @@ class OrderService:
                     "network_order_id": order_data.get("network_order_id"),
                     "client_order_id": order_data.get('order_number'),
                     "customer_info": {
-                        "customer_id": order_data.get("alternate_customer_id"), #rc.customer_id
-                        "noderetail_customer_id": order_data.get("customer_id"), #rs.customer_id
+                        "customer_id": order_data.get("alternate_customer_id"),
+                        "noderetail_customer_id": order_data.get("customer_id"),
                         "contact": {
-                            "phone": order_data.get("rc_mobile"), #rc.
-                            "email": order_data.get("rc_email") #rc
+                            "phone": order_data.get("rc_mobile"),
+                            "email": order_data.get("rc_email")
                         }
                     },
                     "billing_info": {
@@ -414,19 +414,19 @@ class OrderService:
                                 "id": order_data.get("order_item_id"),
                                 "qty": order_data.get("qty"), #rsi.qty
                                 "price": str(order_data.get("mrp")), #rs.mrp
-                                "discount": str(order_data.get("item_discount_amount")), #rsi.item_discount_amount
-                                "taxes": other_charges, #rsi.other_charges
+                                "discount": str(order_data.get("item_discount_amount")),
+                                "taxes": other_charges,
                                 "is_price_incl_taxes": True
                             }
                         ],
-                        "discount": str(order_data.get("discount_amount")), #rs.discount_amount
+                        "discount": str(order_data.get("discount_amount")),
                         "packaging_charges": 0,
                         "delivery_charges": str(order_data.get("shipping_amount")),
                         "other_charges": other_charges,
-                        "order_total": str(order_data.get("subtotal")) #rs.subtotal
+                        "order_total": str(order_data.get("subtotal"))
                     },
                     "payment_info": {
-                        "payment_mode": order_data.get("payment_mode"), #rs.payment_mode
+                        "payment_mode": order_data.get("payment_mode"),
                         "payment_transaction_id": order_data.get("checkout_id"),
                         "payment_status": order_data.get("payment_status")
                     },
