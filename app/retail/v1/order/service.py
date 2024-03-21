@@ -455,12 +455,14 @@ class OrderService:
             response_payload = []
             if order_status_data:
                 for response in order_status_data:
-                    status_detail = next((detail for detail in status_details if detail['order_id'] == response.get('order_number')), None)
+                    status_detail = next(
+                        (detail for detail in status_details if detail['order_id'] == response.get('order_number')),
+                        None)
                     payload = {
                         "order_id": response.get('order_number'),
                         "noderetail_order_id": response.get('rs_order_id'),
                         "is_order_created": True if response.get('is_order_created') == 1 else False,
-                        "noderetail_account_user_id": response.get('noderetail_account_user_id'),
+                        "noderetail_account_user_id": '',
                         "noderetail_order_instance_id": noderetail_order_instance_id,
                         "is_order_active": True,
                         "order_status": status_detail['order_status'],
@@ -470,9 +472,9 @@ class OrderService:
                     }
                     for details in status_details:
                         item_payload = {
-                            "item_order_id": details.get('item_order_id'),
-                            "item_id": int(details.get('item_id')),
-                            "noderetail_item_id": details.get('noderetail_item_id'),
+                            "item_order_id": response.get('item_order_id'),
+                            "item_id": int(response.get('item_id')),
+                            "noderetail_item_id": response.get('noderetail_item_id'),
                             "fulfillments": [{
                                 "fulfillment_id": details.get('fulfillment_id'),
                                 "fulfillment_mode": details.get('fulfillment_mode'),
