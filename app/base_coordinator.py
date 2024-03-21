@@ -108,6 +108,12 @@ class BaseCoordinator:
         else:
             return self.mysql_conn_pool.cursor.execute(query, tuple([v for v in db_params.values()]))
 
+    def save_data_in_db_pool_nodeapp_with_place_holder(self, db_params, table_name, commit=True):
+        query = "insert into " + table_name + " (" + ",".join(db_params.keys()) + ") VALUES (" + ', '.join('%s' for v in db_params.values()) + ")"
+        if commit:
+            return self.mysql_conn_pool_nodeapp.write_db_pool_nodeapp(query, tuple([v for v in db_params.values()]))
+        else:
+            return self.mysql_conn_pool_nodeapp.cursor.execute(query, tuple([v for v in db_params.values()]))
 
     @staticmethod
     def path_with_slash(path: str) -> str:

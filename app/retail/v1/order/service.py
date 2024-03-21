@@ -4,7 +4,7 @@ from config import Config
 from datetime import datetime
 import json
 from app.common_utils import get_current_datetime, clean_string, authenticate_user
-from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists
+from app.exceptions import AuthMissing, InvalidDateFormat, AlreadyExists, BadRequest
 from app.retail.v1.order.order_coordinator import OrderCoordinator
 
 class OrderService:
@@ -77,9 +77,9 @@ class OrderService:
             'identifier_instance_id':identifier_instance_id
         }
         try:
-            entity= self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
+            entity= self.coordinator.save_data_in_db_pool_nodeapp(log_params, 'plotch_noderetailapi_request_logs')
         except:
-            entity = self.coordinator.save_data_in_db_pool(log_params, 'plotch_noderetailapi_request_logs')
+            entity = self.coordinator.save_data_in_db_pool_nodeapp(log_params, 'plotch_noderetailapi_request_logs')
         if check_duplicacy:
             raise AlreadyExists('Customer Already Exist')
         jwt_token = self.headers.get('Auth-Token')
@@ -448,49 +448,67 @@ class OrderService:
         return response_payload
 
     def order_status(self):
-        identifier_id = self.params.get('order_id')  # posr.order_id
-        noderetail_order_id = self.params.get('noderetail_order_id')  # poid.order_id
-        noderetail_account_user_id = self.params.get('noderetail_account_user_id')  # poid.user_instance_id
-        noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')  # poid.storefront_id
-        identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+        rs_order_number_list = []
+        rs_order_id_list = []
+        orders = self.params.get('orders')
+        for order in orders:
+            order_number = order.get('order_id')  # rs.order_number
+            order_id = order.get('noderetail_order_id')  # rs.order_id
+            noderetail_account_user_id = order.get('noderetail_account_user_id')
+            noderetail_order_instance_id = order.get('noderetail_order_instance_id')  # storefront_id
+            storefront_id = order.get('noderetail_storefront_id')
 
-        log_id = self.generate_api_logs('order_status', identifier_id, identifier_instance_id)
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+            if not (order_number and storefront_id):
+                raise BadRequest('order_id & noderetail_storefront_id Are Mandatory')
 
-        order_status_data = self.coordinator.get_order_status(identifier_id, identifier_instance_id)
+            if order_number:
+                rs_order_number_list.append(order_number)
+            if order_id:
+                rs_order_id_list.append(order_id)
+            rs_order_cond = ''
+            if rs_order_id_list:
+               rs_order_cond = '''and rs.order_id IN ({})'''.format(str(rs_order_id_list)[1:-1])
 
-        response_payload = []
-        if order_status_data:
-            for response in order_status_data:
-                payload = {
-                    "order_id": response.get('noderetail_order_id'),
-                    "noderetail_order_id": response.get('noderetail_order_id'),
-                    "is_order_created": response.get('is_order_created'),
-                    "noderetail_account_user_id": response.get('noderetail_account_user_id'),
-                    "noderetail_order_instance_id": noderetail_order_instance_id,
-                    "is_order_active": 1,
-                    "order_status": response.get('order_status'),
-                    "order_created_time": response.get('order_created_time'),
-                    "order_update_time": response.get('order_update_time'),
-                    "order_items_info": [
-                        {
+            log_id = self.generate_api_logs('order_status', order_number, storefront_id)
+            authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+
+            order_status_data = self.coordinator.get_order_status(rs_order_number_list, storefront_id, rs_order_cond)
+            status_details = self.coordinator.get_status(rs_order_number_list, storefront_id)
+
+            response_payload = []
+            if order_status_data:
+                for response in order_status_data:
+                    status_detail = next(
+                        (detail for detail in status_details if detail['order_id'] == response.get('order_number')),
+                        None)
+                    payload = {
+                        "order_id": response.get('order_number'),
+                        "noderetail_order_id": response.get('rs_order_id'),
+                        "is_order_created": True if response.get('is_order_created') == 1 else False,
+                        "noderetail_account_user_id": '',
+                        "noderetail_order_instance_id": noderetail_order_instance_id,
+                        "is_order_active": True,
+                        "order_status": status_detail['order_status'],
+                        "order_created_time": response.get('order_created_time'),
+                        "order_update_time": response.get('order_update_time'),
+                        "order_items_info": []
+                    }
+                    for details in status_details:
+                        item_payload = {
                             "item_order_id": response.get('item_order_id'),
-                            "item_id": response.get('item_id'),
+                            "item_id": int(response.get('item_id')),
                             "noderetail_item_id": response.get('noderetail_item_id'),
-                            "fulfillments": [
-                                {
-                                    "fulfillment_id": response.get('fulfillment_id'),
-                                    "fulfillment_mode": response.get('fulfillment_mode'),
-                                    "fulfillment_status": response.get('fulfillment_status'),
-                                    "fulfillment_courier": response.get('fulfilment_courier'),
-                                    "fulfillment_tracking": response.get('fulfillment_tracking'),
-                                    "fulfillment_update_time": response.get('fulfillment_update_time')
-                                }
-                            ],
-                            "refund_status": response.get('refund_status')
+                            "fulfillments": [{
+                                "fulfillment_id": details.get('fulfillment_id'),
+                                "fulfillment_mode": details.get('fulfillment_mode'),
+                                "fulfillment_status": details.get('fulfillment_status'),
+                                "fulfillment_courier": details.get('fulfillment_courier'),
+                                "fulfillment_tracking": details.get('fulfillment_tracking'),
+                                "fulfillment_update_time": details.get('fulfillment_update_time')
+                            }],
+                            "refund_status": details.get('refund_status')
                         }
-                    ]
-                }
-                response_payload.append(payload)
+                        payload["order_items_info"].append(item_payload)
+                    response_payload.append(payload)
         return {"api_action_status": "success", "orders_status": response_payload}
 

@@ -1,7 +1,7 @@
 from flask import request
 from functools import wraps
 from app.common_utils import render_error_response
-from app.exceptions import AuthMissing, InvalidAuth, CustomrAlreadyExist, AlreadyExists, InvalidDateFormat
+from app.exceptions import AuthMissing, InvalidAuth, CustomrAlreadyExist, AlreadyExists, InvalidDateFormat, BadRequest
 from jsonschema import validate, ValidationError, FormatChecker, SchemaError
 from config import Config
 
@@ -51,6 +51,8 @@ def validate_params(param_config=None, token_required=True):
             except AlreadyExists as e:
                 return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
             except InvalidDateFormat as e:
+                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
+            except BadRequest as e:
                 return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
             except Exception as e:
                 return render_error_response(str(e), 400, stack_trace_params, params, headers)
