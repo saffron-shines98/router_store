@@ -29,3 +29,8 @@ class InvalidDateFormat(Exception):
         self.message = message
         super(InvalidDateFormat, self).__init__()
 
+class BadRequest(Exception):
+    def __init__(self, message, error_code=400):
+        self.http_code = error_code
+        self.message = message
+        super(BadRequest, self).__init__()
