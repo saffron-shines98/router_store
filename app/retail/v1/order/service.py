@@ -434,22 +434,25 @@ class OrderService:
         for order in orders:
             order_number = order.get('order_id')  # rs.order_number
             order_id = order.get('noderetail_order_id')  # rs.order_id
-            noderetail_account_user_id = order.get('noderetail_account_user_id')  # poid.user_instance_id
+            noderetail_account_user_id = order.get('noderetail_account_user_id')
             noderetail_order_instance_id = order.get('noderetail_order_instance_id')  # storefront_id
             storefront_id = order.get('noderetail_storefront_id')
 
-            if not (order_number and order_id and storefront_id):
-                raise BadRequest('order_id, noderetail_order_id, noderetail_storefront_id Are Mandatory')
+            if not (order_number and storefront_id):
+                raise BadRequest('order_id & noderetail_storefront_id Are Mandatory')
 
             if order_number:
                 rs_order_number_list.append(order_number)
             if order_id:
                 rs_order_id_list.append(order_id)
+            rs_order_cond = ''
+            if rs_order_id_list:
+               rs_order_cond = '''and rs.order_id IN ({})'''.format(str(rs_order_id_list)[1:-1])
 
             log_id = self.generate_api_logs('order_status', order_number, storefront_id)
             authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
 
-            order_status_data = self.coordinator.get_order_status(rs_order_number_list, storefront_id, rs_order_id_list)
+            order_status_data = self.coordinator.get_order_status(rs_order_number_list, storefront_id, rs_order_cond)
             status_details = self.coordinator.get_status(rs_order_number_list, storefront_id)
 
             response_payload = []
