@@ -33,25 +33,30 @@ class OrderCoordinator(BaseCoordinator):
         return self.mysql_conn_pool.query_db_one_pool(query)
 
     def fetch_order_details(self, identifier_instance_id, rs_order_id, order_num, date_created, date_updated, pagination_condition):
-        query = ''' SELECT po.*, rs.order_id as rs_order_id, rs.order_number, 
-        rsi.ondc_order_id AS network_order_id, po.alternate_customer_id AS noderetail_customer_id  
-        FROM plotch_order_importer_data as po 
-        JOIN retail_sales as rs on rs.order_number = po.order_id
+        query = ''' SELECT rs.order_id as rs_order_id, rs.order_number, rs.customer_id, rc.alternate_customer_id, 
+        rc.mobile as rc_mobile, rc.email as rc_email, rsi.order_item_id, rsi.ondc_order_id AS network_order_id, rsi.qty, rsi.mrp, rsi.item_discount_amount, 
+        rsi.shipping_amount, rsi.shipping_amount, rs.discount_amount, rs.subtotal, rs.payment_mode, rs.checkout_id, payment_status, rsi.other_charges  
+        FROM retail_sales as rs 
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
-        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id 
-        JOIN retail_shipment_status AS rss ON rsi.status = rss.entity_id
-        where po.storefront_id = '{}' and rs.order_id='{}' {} {} {} {}
+        JOIN retail_customer as rc ON rs.customer_id = rc.customer_id 
+        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id
+        where rs.storefront_id = '{}' and rs.order_id='{}' {} {} {} {}
         '''.format(identifier_instance_id, rs_order_id, order_num, date_created, date_updated, pagination_condition)
         return self.mysql_conn_pool.query_db_pool(query)
 
-    def get_fetch_details(self, identifier_instance_id, rs_order_id, order_status, order_num):
-        query= '''SELECT po.order_id, po.fulfilment_status AS fulfillment_status, po.created_at, 
+    def get_customer_address(self, address_type, identifier_instance_id, rs_order_id, order_num):
+        query = '''SELECT rsa.* from retail_sales_address as rsa JOIN retail_sales AS rs ON rs.order_id = rsa.order_id 
+        where rsa.address_type = '{}' and rs.storefront_id = '{}' and rs.order_id='{}' {} '''.format(address_type, identifier_instance_id, rs_order_id, order_num)
+        return self.mysql_conn_pool.query_db_one_pool(query)
+
+    def get_fulfilment_details(self, identifier_instance_id, rs_order_id, order_status, order_num):
+        query= '''SELECT rs.order_number, po.fulfilment_status AS fulfillment_status, po.created_at, 
         rsi.vendor_order_id, rsh.transaction_type, rsh.courier_partner, rsh.tracking_number  
         FROM plotch_order_status_request as po 
         JOIN retail_sales as rs on rs.order_number = po.order_id  
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
-        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id WHERE po.storefront_id = '{}' and 
-        rs.order_id = '{}' and po.order_status = '{}' {} 
+        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id WHERE rs.storefront_id = '{}' and 
+        rs.order_id = '{}' {} {} 
         '''.format(identifier_instance_id, rs_order_id, order_status, order_num)
         return self.mysql_conn_pool.query_db_pool(query)
 
