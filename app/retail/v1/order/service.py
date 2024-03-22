@@ -310,8 +310,9 @@ class OrderService:
         return 'success'
 
     def order_fetch(self):
-        identifier_id = self.params.get('order_id')  # posr.order_id
-        identifier_instance_id = self.params.get('noderetail_storefront_id')  # posr.storefront_id
+        order_number = self.params.get('order_id')  # rs.order_number
+        identifier_instance_id = self.params.get('noderetail_storefront_id')  # storefront_id
+        rs_order_id = self.params.get('noderetail_order_id')
         noderetail_account_user_id = self.params.get('noderetail_account_user_id')
         noderetail_order_instance_id = self.params.get('noderetail_order_instance_id')
         order_status = self.params.get('order_status', '')
@@ -319,111 +320,144 @@ class OrderService:
         created_at_end = self.params.get('order_created_at_date_end', '')
         updated_at_start = self.params.get('order_updated_at_date_start', '')
         updated_at_end = self.params.get('order_updated_at_date_end', '')
-        page_number = max(int(self.params.get('page_number', 1)), 1)
-        page_size = int(self.params.get('page_size', 10))
+        page_number = self.params.get('page_number')
+        page_size = self.params.get('page_size')
+
+        if not identifier_instance_id:
+            raise BadRequest('Storefront_id is Mandatory')
+
+        identifier_id = order_number if order_number else rs_order_id
 
         log_id = self.generate_api_logs('order_fetch', identifier_id, identifier_instance_id)
         authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'),self.headers.get('Nodesso-Id'))
 
-        if page_size or page_number:
+        pagination_condition = ''
+        if page_size and page_number:
+            page_number, page_size = max(int(page_number), 1), max(int(page_size), 1)
             pagination_condition = 'LIMIT {} OFFSET {}'.format(page_size, (page_number - 1) * page_size)
         date_created = ''
         if created_at_start and created_at_end:
-            date_created = '''AND poid.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
+            date_created = '''AND rsi.created_at BETWEEN '{}' AND '{}' '''.format(created_at_start, created_at_end)
         date_updated = ''
         if updated_at_start and updated_at_end:
-            date_updated = '''AND poid.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
-        get_orders_data = self.coordinator.fetch_order_details(identifier_id, identifier_instance_id, order_status, date_created, date_updated, pagination_condition)
+            date_updated = '''AND rsi.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
+        order_num = ''
+        if order_number:
+            order_num = '''AND rs.order_number = '{}' '''.format(order_number)
+        order_id = ''
+        if rs_order_id:
+            order_id = '''AND rs.order_id = '{}' '''.format(rs_order_id)
+        order_status_cond = ''
+        if order_status:
+            order_status_cond = '''AND po.order_status = '{}' '''.format(order_status)
+
+        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, order_num, order_id, date_created, date_updated, pagination_condition)
+        rs_order_ids = [order_data.get("rs_order_id") for order_data in get_orders_data]
+        address = self.coordinator.get_customer_address('billing', identifier_instance_id, rs_order_ids)
+        shipping_address = self.coordinator.get_customer_address('shipping', identifier_instance_id, rs_order_ids)
+        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_status_cond, rs_order_ids)
 
         response_payload = {
             "api_action_status": "success",
-            "order_fetch_request_id": None,
+            "order_fetch_request_id": log_id,
             "noderetail_account_user_id": noderetail_account_user_id,
             "noderetail_order_instance_id": noderetail_order_instance_id,
             "orders": []
         }
-        if get_orders_data:
-            response_payload["order_fetch_request_id"] = get_orders_data[0].get("entity_id")
 
         for order_data in get_orders_data:
+                other_charges = order_data.get("surcharge_tax", 0) + order_data.get("packing", 0) + order_data.get("misc",0)
                 payload = {
-                    "noderetail_order_id": order_data.get("noderetail_order_id"),
-                    "network_order_id": order_data.get("ondc_network_order_id"),
-                    "client_order_id": identifier_id,
+                    "noderetail_order_id": order_data.get("rs_order_id"),
+                    "network_order_id": order_data.get("network_order_id"),
+                    "client_order_id": order_data.get('order_number'),
                     "customer_info": {
                         "customer_id": order_data.get("alternate_customer_id"),
-                        "noderetail_customer_id": order_data.get("noderetail_customer_id"),
+                        "noderetail_customer_id": order_data.get("customer_id"),
                         "contact": {
-                            "phone": order_data.get("phone"),
-                            "email": order_data.get("email")
+                            "phone": order_data.get("rc_mobile"),
+                            "email": order_data.get("rc_email")
                         }
                     },
-                    "billing_info": {
-                        "contact": {
-                            "phone": order_data.get("billing_contact_number"),
-                            "email": order_data.get("billing_email")
-                        },
-                        "location": {
-                            "gps": order_data.get("billing_gps"),
-                            "building": order_data.get("billing_building"),
-                            "street_name": order_data.get("billing_street"),
-                            "locality": order_data.get("billing_locality"),
-                            "city": order_data.get("billing_city"),
-                            "area_code": order_data.get("billing_area_code"),
-                            "state": order_data.get("billing_state"),
-                            "country": order_data.get("billing_country"),
-                            "label": order_data.get("billing_label")
-                        }
-                    },
-                    "shipping_info": {
-                        "contact": {
-                            "phone": order_data.get("shipping_contact_number"),
-                            "email": order_data.get("shipping_email")
-                        },
-                        "location": {
-                            "gps": order_data.get("shipping_gps"),
-                            "building": order_data.get("shipping_building"),
-                            "street_name": order_data.get("shipping_street"),
-                            "locality": order_data.get("shipping_locality"),
-                            "city": order_data.get("shipping_city"),
-                            "area_code": order_data.get("shipping_area_code"),
-                            "state": order_data.get("shipping_state"),
-                            "country": order_data.get("shipping_country"),
-                            "label": order_data.get("shipping_label")
-                        }
-                    },
+                    "billing_info": {},
+                    "shipping_info": {},
                     "order_info": {
                         "order_items": [
                             {
-                                "id": order_data.get("item_id"),
+                                "id": order_data.get("order_item_id"),
                                 "qty": order_data.get("qty"),
-                                "price": str(order_data.get("price")),
-                                "discount": str(order_data.get("discount")),
-                                "taxes": str(order_data.get("taxes"))
+                                "price": str(order_data.get("mrp")),
+                                "discount": str(order_data.get("item_discount_amount")),
+                                "taxes": other_charges,
+                                "is_price_incl_taxes": True
                             }
                         ],
-                        "discount": str(order_data.get("order_discount")),
-                        "packaging_charges": str(order_data.get("packaging_charges")),
-                        "delivery_charges": str(order_data.get("delivery_charges")),
-                        "other_charges": str(order_data.get("other_charges")),
-                        "order_total": str(order_data.get("order_total"))
+                        "discount": str(order_data.get("discount_amount")),
+                        "packaging_charges": 0,
+                        "delivery_charges": str(order_data.get("shipping_amount")),
+                        "other_charges": other_charges,
+                        "order_total": str(order_data.get("subtotal"))
                     },
                     "payment_info": {
                         "payment_mode": order_data.get("payment_mode"),
-                        "payment_transaction_id": order_data.get("payment_transaction_id"),
+                        "payment_transaction_id": order_data.get("checkout_id"),
                         "payment_status": order_data.get("payment_status")
                     },
-                    "fulfillments": [
-                        {
-                            "fulfillment_id": order_data.get("fulfillment_id"),
-                            "fulfillment_mode": order_data.get("fulfillment_mode"),
-                            "fulfillment_status": order_data.get("fulfillment_status"),
-                            "fulfillment_courier": order_data.get("fulfillment_courier"),
-                            "fulfillment_tracking": order_data.get("fulfillment_tracking"),
-                            "fulfillment_update_time": order_data.get("fulfillment_update_time")
-                       }
-                    ]
+                    "fulfillments": []
                 }
+                for addr in address:
+                    if addr.get('order_id') == order_data.get('rs_order_id'):
+                        payload["billing_info"] = {
+                            "contact": {
+                                "phone": addr.get("mobile"),
+                                "email": addr.get("email")
+                            },
+                            "location": {
+                                "gps": addr.get("billing_gps"),
+                                "building": addr.get("building"),
+                                "street_name": addr.get("address"),
+                                "locality": addr.get("locality"),
+                                "city": addr.get("city"),
+                                "area_code": addr.get("pincode"),
+                                "state": addr.get("state"),
+                                "country": addr.get("country"),
+                                "label": addr.get("billing_label")
+                            }
+                        }
+                        break
+
+                for shipping_addr in shipping_address:
+                    if shipping_addr.get('order_id') == order_data.get('rs_order_id'):
+                        payload["shipping_info"] = {
+                            "contact": {
+                                "phone": shipping_addr.get("mobile"),
+                                "email": shipping_addr.get("shipping_email")
+                            },
+                            "location": {
+                                "gps": shipping_addr.get("shipping_gps"),
+                                "building": shipping_addr.get("building"),
+                                "street_name": shipping_addr.get("address"),
+                                "locality": shipping_addr.get("locality"),
+                                "city": shipping_addr.get("city"),
+                                "area_code": shipping_addr.get("pincode"),
+                                "state": shipping_addr.get("state"),
+                                "country": shipping_addr.get("country"),
+                                "label": shipping_addr.get("shipping_label")
+                            }
+                        }
+                        break
+                for fetch_detail in fetch_details:
+                    if fetch_detail["order_number"] == order_data["order_number"]:
+                        fulfillment_payload = {
+                            "fulfillment_id": fetch_detail.get("vendor_order_id"),
+                            "fulfillment_mode": fetch_detail.get("transaction_type"),
+                            "fulfillment_status": fetch_detail.get("fulfillment_status"),
+                            "fulfillment_courier": fetch_detail.get("courier_partner"),
+                            "fulfillment_tracking": fetch_detail.get("tracking_number"),
+                            "fulfillment_update_time": fetch_detail.get("created_at")
+                        }
+                        payload["fulfillments"].append(fulfillment_payload)
+
                 response_payload["orders"].append(payload)
         return response_payload
 
