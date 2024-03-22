@@ -26,10 +26,14 @@ class VendorCoordinator(BaseCoordinator):
         rhi.marketplace_logo, rhi.store_detail_description, rhi.store_description, 
         rhi.store_open_days, rhi.store_timing, rhi.name, rhi.email, rhi.mobile, rhi.store_description,
         rhi.image, rhi.fssai, rhi.pan_no, rhi.gstin, rhi.categories, rhi.serviceability_mode, rhi.pickup_radius, rhi.other_params, rhi.account_id,
-        psp.contact_name, psp.account_name, psp.account_no, psp.ifsc_code, ca.account_type from retail_user_instance as rui
+        psp.contact_name, psp.account_name, psp.account_no, psp.ifsc_code, ca.account_type, 
+        pms.entity_id as pms_entity_id, pms.hub_instance_id as marketplace_id,pms.status as marketplace_approved,
+        ca.account_id as ca_account_id
+        from retail_user_instance as rui
         JOIN retail_hub_instance as rhi on rui.account_id = rhi.account_id
         JOIN plotch_seller_profile as psp on rui.user_instance_id = psp.user_instance_id
         JOIN crs_accounts as ca on rui.account_id = ca.account_id
+        LEFT JOIN  plotch_marketplace_subscription as pms on pms.vendor_id = rui.vendor_id and pms.user_instance_id= rui.user_instance_id
         where rui.seller_id = '{}' AND rui.user_instance_id IN({}) {} {} {} {} {} {} '''.format(identifier_id, str(user_instance_ids)[1:-1], status_f, storename, email_f,
         phone_f, city_f, state_f)
         return self.mysql_conn_pool.query_db_pool(query)

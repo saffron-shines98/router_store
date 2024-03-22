@@ -56,8 +56,8 @@ class VendorService:
         phone = self.params.get('provider_phone')
         city = self.params.get('provider_city')
         state = self.params.get('provider_state')
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
-        entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
 
         status_f = "AND rui.is_active = '{}' ".format(status) if status else ''
         storename = "AND rui.company_name = '{}' ".format(store_name) if store_name else ''
@@ -73,6 +73,7 @@ class VendorService:
         phone_f, city_f, state_f)
 
         response_payload = []
+        agg_approved = ""
         for provider_data in get_providers_data:
             tnc = json.loads(provider_data.get('other_params') or '{}')
             try:
@@ -89,12 +90,19 @@ class VendorService:
                 pickup_radius = str(provider_data.get('pickup_radius', ''))
             else:
                 serviceability_mode = pickup_radius = ''
+            if provider_data.get('marketplace_approved') in [1, '1'] :
+                agg_approved = "Yes"
+            elif provider_data.get('marketplace_approved') in [2, '2'] :
+                agg_approved = "Reject"
+            else:
+                agg_approved = "No"
             provider_payload = {
                 "provider_id": provider_data.get('seller_id'),
-                "agg_marketplace_id": provider_data.get(self.params.get('agg_marketplace_id')),
+                "agg_marketplace_id": provider_data.get('marketplace_id'),
                 "status": provider_data.get('is_active'),
-                "create_account": True,
-                "agg_subscribe": True,
+                "create_account": True if provider_data.get('ca_account_id', '') else False,
+                "agg_subscribe": True if provider_data.get('pms_entity_id','') else False,
+                "agg_approved": agg_approved,
                 "provider_profile": {
                     "store_name": provider_data.get('company_name'),
                     "brand_logo": provider_data.get('marketplace_logo'),
