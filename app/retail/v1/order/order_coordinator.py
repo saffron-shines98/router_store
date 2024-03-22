@@ -43,19 +43,19 @@ class OrderCoordinator(BaseCoordinator):
         '''.format(identifier_instance_id, order_num, order_id, date_created, date_updated, pagination_condition)
         return self.mysql_conn_pool.query_db_pool(query)
 
-    def get_customer_address(self, address_type, identifier_instance_id, order_num, order_id, pagination_condition):
+    def get_customer_address(self, address_type, identifier_instance_id, rs_order_ids):
         query = '''SELECT rsa.* from retail_sales_address as rsa JOIN retail_sales AS rs ON rs.order_id = rsa.order_id 
-        where rsa.address_type = '{}' and rs.storefront_id = '{}' {} {} {} '''.format(address_type, identifier_instance_id, order_num, order_id, pagination_condition)
-        return self.mysql_conn_pool.query_db_one_pool(query)
+        where rsa.address_type = '{}' and rs.storefront_id = '{}' and rs.order_id IN({}) '''.format(address_type, identifier_instance_id, str(rs_order_ids)[1:-1])
+        return self.mysql_conn_pool.query_db_pool(query)
 
-    def get_fulfilment_details(self, identifier_instance_id, order_num, order_status, order_id, pagination_condition):
+    def get_fulfilment_details(self, identifier_instance_id, order_status, rs_order_ids):
         query= '''SELECT rs.order_number, po.fulfilment_status AS fulfillment_status, po.created_at, 
         rsi.vendor_order_id, rsh.transaction_type, rsh.courier_partner, rsh.tracking_number  
         FROM plotch_order_status_request as po 
         JOIN retail_sales as rs on rs.order_number = po.order_id  
         JOIN retail_sales_item AS rsi ON rs.order_id = rsi.order_id 
-        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id WHERE rs.storefront_id = '{}' {} {} {} {}
-        '''.format(identifier_instance_id, order_num, order_status, order_id, pagination_condition)
+        JOIN retail_shipments AS rsh ON rsi.shipment_id = rsh.entity_id WHERE rs.storefront_id = '{}' {} and rs.order_id IN({})
+        '''.format(identifier_instance_id, order_status, str(rs_order_ids)[1:-1])
         return self.mysql_conn_pool.query_db_pool(query)
 
     def get_order_status(self, order_id_list, identifier_instance_id, rs_order_cond):

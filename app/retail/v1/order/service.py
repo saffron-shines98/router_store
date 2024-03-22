@@ -350,10 +350,12 @@ class OrderService:
         order_status_cond = ''
         if order_status:
             order_status_cond = '''AND po.order_status = '{}' '''.format(order_status)
+
         get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, order_num, order_id, date_created, date_updated, pagination_condition)
-        address = self.coordinator.get_customer_address('billing', identifier_instance_id, order_num, order_id, pagination_condition)
-        shipping_adddress = self.coordinator.get_customer_address('shipping', identifier_instance_id, order_num, order_id, pagination_condition)
-        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_num, order_status_cond, order_id, pagination_condition)
+        rs_order_ids = [order_data.get("rs_order_id") for order_data in get_orders_data]
+        address = self.coordinator.get_customer_address('billing', identifier_instance_id, rs_order_ids)
+        shipping_address = self.coordinator.get_customer_address('shipping', identifier_instance_id, rs_order_ids)
+        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_status_cond, rs_order_ids)
 
         response_payload = {
             "api_action_status": "success",
@@ -377,46 +379,14 @@ class OrderService:
                             "email": order_data.get("rc_email")
                         }
                     },
-                    "billing_info": {
-                        "contact": {
-                            "phone": address.get("mobile"),
-                            "email": address.get("email")
-                        },
-                        "location": {
-                            "gps": address.get("billing_gps"),
-                            "building": address.get("building"),
-                            "street_name": address.get("address"),
-                            "locality": address.get("locality"),
-                            "city": address.get("city"),
-                            "area_code": address.get("pincode"),
-                            "state": address.get("state"),
-                            "country": address.get("country"),
-                            "label": address.get("billing_label")
-                        }
-                    },
-                    "shipping_info": {
-                        "contact": {
-                            "phone": shipping_adddress.get("mobile"),
-                            "email": shipping_adddress.get("shipping_email")
-                        },
-                        "location": {
-                            "gps": shipping_adddress.get("shipping_gps"),
-                            "building": shipping_adddress.get("building"),
-                            "street_name": shipping_adddress.get("address"),
-                            "locality": shipping_adddress.get("locality"),
-                            "city": shipping_adddress.get("city"),
-                            "area_code": shipping_adddress.get("pincode"),
-                            "state": shipping_adddress.get("state"),
-                            "country": shipping_adddress.get("country"),
-                            "label": shipping_adddress.get("shipping_label")
-                        }
-                    },
+                    "billing_info": {},
+                    "shipping_info": {},
                     "order_info": {
                         "order_items": [
                             {
                                 "id": order_data.get("order_item_id"),
-                                "qty": order_data.get("qty"), #rsi.qty
-                                "price": str(order_data.get("mrp")), #rs.mrp
+                                "qty": order_data.get("qty"),
+                                "price": str(order_data.get("mrp")),
                                 "discount": str(order_data.get("item_discount_amount")),
                                 "taxes": other_charges,
                                 "is_price_incl_taxes": True
@@ -435,6 +405,47 @@ class OrderService:
                     },
                     "fulfillments": []
                 }
+                for addr in address:
+                    if addr.get('order_id') == order_data.get('rs_order_id'):
+                        payload["billing_info"] = {
+                            "contact": {
+                                "phone": addr.get("mobile"),
+                                "email": addr.get("email")
+                            },
+                            "location": {
+                                "gps": addr.get("billing_gps"),
+                                "building": addr.get("building"),
+                                "street_name": addr.get("address"),
+                                "locality": addr.get("locality"),
+                                "city": addr.get("city"),
+                                "area_code": addr.get("pincode"),
+                                "state": addr.get("state"),
+                                "country": addr.get("country"),
+                                "label": addr.get("billing_label")
+                            }
+                        }
+                        break
+
+                for shipping_addr in shipping_address:
+                    if shipping_addr.get('order_id') == order_data.get('rs_order_id'):
+                        payload["shipping_info"] = {
+                            "contact": {
+                                "phone": shipping_addr.get("mobile"),
+                                "email": shipping_addr.get("shipping_email")
+                            },
+                            "location": {
+                                "gps": shipping_addr.get("shipping_gps"),
+                                "building": shipping_addr.get("building"),
+                                "street_name": shipping_addr.get("address"),
+                                "locality": shipping_addr.get("locality"),
+                                "city": shipping_addr.get("city"),
+                                "area_code": shipping_addr.get("pincode"),
+                                "state": shipping_addr.get("state"),
+                                "country": shipping_addr.get("country"),
+                                "label": shipping_addr.get("shipping_label")
+                            }
+                        }
+                        break
                 for fetch_detail in fetch_details:
                     if fetch_detail["order_number"] == order_data["order_number"]:
                         fulfillment_payload = {
