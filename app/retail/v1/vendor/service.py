@@ -56,8 +56,8 @@ class VendorService:
         phone = self.params.get('provider_phone')
         city = self.params.get('provider_city')
         state = self.params.get('provider_state')
-        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
-        # entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
+        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        entity_id = self.generate_api_logs(type='fetch_vendor', identifier_id=identifier_id, identifier_instance_id=identifier_instance_id)
 
         status_f = "AND rui.is_active = '{}' ".format(status) if status else ''
         storename = "AND rui.company_name = '{}' ".format(store_name) if store_name else ''
