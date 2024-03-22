@@ -323,8 +323,8 @@ class OrderService:
         page_number = self.params.get('page_number')
         page_size = self.params.get('page_size')
 
-        if not (order_number and identifier_instance_id):
-            raise BadRequest('order_id & Storefront_id are Mandatory')
+        if not identifier_instance_id:
+            raise BadRequest('Storefront_id is Mandatory')
 
         identifier_id = order_number if order_number else rs_order_id
 
@@ -341,16 +341,19 @@ class OrderService:
         date_updated = ''
         if updated_at_start and updated_at_end:
             date_updated = '''AND rsi.updated_at BETWEEN '{}' AND '{}' '''.format(updated_at_start, updated_at_end)
+        order_num = ''
+        if order_number:
+            order_num = '''AND rs.order_number = '{}' '''.format(order_number)
         order_id = ''
         if rs_order_id:
             order_id = '''AND rs.order_id = '{}' '''.format(rs_order_id)
         order_status_cond = ''
         if order_status:
             order_status_cond = '''AND po.order_status = '{}' '''.format(order_status)
-        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, order_number, order_id, date_created, date_updated, pagination_condition)
-        address = self.coordinator.get_customer_address('billing', identifier_instance_id, order_number, order_id)
-        shipping_adddress = self.coordinator.get_customer_address('shipping', identifier_instance_id, order_number, order_id)
-        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_number, order_status_cond, order_id, )
+        get_orders_data = self.coordinator.fetch_order_details(identifier_instance_id, order_num, order_id, date_created, date_updated, pagination_condition)
+        address = self.coordinator.get_customer_address('billing', identifier_instance_id, order_num, order_id, pagination_condition)
+        shipping_adddress = self.coordinator.get_customer_address('shipping', identifier_instance_id, order_num, order_id, pagination_condition)
+        fetch_details = self.coordinator.get_fulfilment_details(identifier_instance_id, order_num, order_status_cond, order_id, pagination_condition)
 
         response_payload = {
             "api_action_status": "success",
