@@ -33,7 +33,7 @@ class VendorCoordinator(BaseCoordinator):
         JOIN retail_hub_instance as rhi on rui.account_id = rhi.account_id
         JOIN plotch_seller_profile as psp on rui.user_instance_id = psp.user_instance_id
         JOIN crs_accounts as ca on rui.account_id = ca.account_id
-        LEFT JOIN  plotch_marketplace_subscription as pms on pms.vendor_id = rui.vendor_id and pms.user_instance_id= rui.user_instance_id
+        LEFT JOIN  plotch_marketplace_subscription as pms on pms.user_instance_id= rui.user_instance_id
         where rui.seller_id = '{}' AND rui.user_instance_id IN({}) {} {} {} {} {} {} '''.format(identifier_id, str(user_instance_ids)[1:-1], status_f, storename, email_f,
         phone_f, city_f, state_f)
         return self.mysql_conn_pool.query_db_pool(query)
