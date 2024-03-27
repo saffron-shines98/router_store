@@ -16,6 +16,7 @@ class CartService:
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
             'type': type,
+            'status': 0,
             'identifier_id': identifier_id,
             'identifier_instance_id': identifier_instance_id
         }
@@ -36,7 +37,7 @@ class CartService:
         self.coordinator.validate_jwt(payload)
 
     def cart_create(self):
-        authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
+        # authenticate_user_from_through_sso = authenticate_user(self.headers.get('Auth-Token'), self.headers.get('Nodesso-Id'))
         client_cart_id = self.params.get('client_cart_id')
         noderetail_storefront_id = self.params.get('noderetail_storefront_id')
         log_id = self.generate_api_logs(type='cart_create', identifier_id=client_cart_id, identifier_instance_id=noderetail_storefront_id)
