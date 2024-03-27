@@ -223,6 +223,16 @@ class OrderService:
             self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
         except:
             self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
+
+        tat_params = {
+            'client_order_id': self.params.get('order_id'),
+            'tat': self.params.get('tat')
+        }
+        try:
+            self.coordinator.save_data_in_db_pool(tat_params, 'plotch_client_order_tat')
+        except:
+            self.coordinator.save_data_in_db_pool(tat_params, 'plotch_client_order_tat')
+
         return 'success'
 
     def order_update(self):
