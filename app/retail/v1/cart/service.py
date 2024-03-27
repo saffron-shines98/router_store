@@ -16,6 +16,7 @@ class CartService:
             'headers': json.dumps(self.headers),
             'created_at': get_current_datetime(),
             'type': type,
+            'status': 0,
             'identifier_id': identifier_id,
             'identifier_instance_id': identifier_instance_id
         }
