@@ -223,6 +223,17 @@ class OrderService:
             self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
         except:
             self.coordinator.save_data_in_db_pool(params, 'plotch_imported_order_transaction')
+
+        try:
+            for order_item in order_info.get('order_items', []):
+                tat_params = {
+                    'client_order_id': self.params.get('order_id'),
+                    'item_id': order_item.get('id') if order_item.get('id') else None,
+                    'estimated_delivery_time': order_item.get('estimated_delivery_time') if order_item.get('estimated_delivery_time') else None
+                }
+                self.coordinator.save_data_in_db_pool(tat_params, 'plotch_client_order_delivery_tat')
+        except:
+            pass
         return 'success'
 
     def order_update(self):
