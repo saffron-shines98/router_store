@@ -40,22 +40,8 @@ def validate_params(param_config=None, token_required=True):
                 stack_trace_params = {'endpoint': str(request.url_rule)}
                 validate(params, param_config, format_checker=FormatChecker())
                 return func(params=params, headers=headers, *args, **kwargs)
-            except (ValidationError, SchemaError) as e:
-                return render_error_response('Invalid Input Fields', 400, stack_trace_params, params, headers)
-            except AuthMissing as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
-            except InvalidAuth as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
-            except CustomrAlreadyExist as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
-            except AlreadyExists as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
-            except InvalidDateFormat as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
-            except BadRequest as e:
-                return render_error_response(e.message, e.http_code, stack_trace_params, params, headers)
             except Exception as e:
-                return render_error_response(str(e), 400, stack_trace_params, params, headers)
+                return render_error_response(str(e))
         return decorated_function
 
     return deco
